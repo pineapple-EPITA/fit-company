@@ -10,4 +10,4 @@ wheels/
 .venv
 
 todo.md
-private/
+private/.DS_Store
