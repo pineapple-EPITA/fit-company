@@ -1,7 +1,8 @@
 from ..database import db_session
-from ..models_db import MuscleGroupModel, ExerciseModel, exercise_muscle_groups
-from ..models_dto import MuscleGroup, Exercise, MuscleGroupWithPrimary
-from sqlalchemy import select, join
+from ..models_db import MuscleGroupModel, ExerciseModel, exercise_muscle_groups, ExerciseHistoryModel
+from ..models_dto import MuscleGroup, Exercise, MuscleGroupWithPrimary, ExerciseHistoryResponseSchema
+from sqlalchemy import select, join, and_
+from datetime import datetime, timedelta
 
 def get_all_muscle_groups():
     """
@@ -201,3 +202,24 @@ def get_exercises_by_muscle_group(muscle_group_id: int):
         return result
     finally:
         db.close() 
+        
+def get_exercises_performed_yesterday(user_email:str):
+    db = db_session()
+    try:
+        yesterday = datetime.now() - timedelta(days=1)
+        yesterday_start = datetime.combine(yesterday.date(), datetime.min.time())
+        yesterday_end = datetime.combine(yesterday.date(), datetime.max.time())
+
+        exercises = db.query(ExerciseModel).join(
+            ExerciseHistoryModel
+        ).filter(
+            and_(
+                ExerciseHistoryModel.user_email == user_email,
+                ExerciseHistoryModel.performed_at >= yesterday_start,
+                ExerciseHistoryModel.performed_at <= yesterday_end
+            )
+        ).distinct().all()
+
+        return exercises
+    finally:
+        db.close()
