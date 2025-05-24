@@ -223,3 +223,16 @@ def get_exercises_performed_yesterday(user_email:str):
         return exercises
     finally:
         db.close()
+        
+def get_exercises_performed(user_email:str):
+    db = db_session()
+    try:
+        exercises = db.query(ExerciseModel).join(
+            ExerciseHistoryModel
+        ).filter(
+            ExerciseHistoryModel.user_email == user_email
+        ).distinct().all()
+
+        return exercises
+    finally:
+        db.close()

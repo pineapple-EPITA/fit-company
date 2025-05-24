@@ -3,7 +3,8 @@ import datetime
 import random
 from ..models_dto import WodResponseSchema, WodExerciseSchema, MuscleGroupImpact, ExerciseHistoryModel
 from ..services.fitness_service import (
-    get_all_exercises, get_exercise_by_id, get_exercises_by_muscle_group, get_exercises_performed_yesterday
+    get_all_exercises, get_exercise_by_id, get_exercises_by_muscle_group, get_exercises_performed_yesterday,
+    get_exercises_performed
 )
 from ..services.fitness_coach_service import calculate_intensity, request_wod
 from ..services.auth_service import jwt_required
@@ -92,3 +93,18 @@ def get_performed_exercises_yesterday():
         
     except Exception as e:
         return jsonify({"error": "Error retrieving yesterday's exercises", "details": str(e)}), 500
+    
+@fitness_bp.route("/fitness/exercises/history", methods=["GET"])
+@jwt_required
+def get_exercise_history():
+    try:
+        user_email = get_jwt_identity()
+        history = ExerciseHistoryModel.get_exercises_performed(user_email)
+        
+        if not history:
+            return jsonify({"message": "No exercise history found"}), 200
+        
+        return jsonify([entry.model_dump() for entry in history]), 200
+        
+    except Exception as e:
+        return jsonify({"error": "Error retrieving exercise history", "details": str(e)}), 500
