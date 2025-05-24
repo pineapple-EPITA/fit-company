@@ -1,10 +1,10 @@
-from pydantic import BaseModel, Field
-from typing import List, Optional, Union
+from pydantic import BaseModel, Field, EmailStr
+from typing import List, Optional
 from datetime import datetime
 
 # User-related DTOs
 class UserSchema(BaseModel):
-    email: str
+    email: EmailStr
     name: str
     role: str
 class TokenSchema(BaseModel):
