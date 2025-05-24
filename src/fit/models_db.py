@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from sqlalchemy import Column, String, Float, Integer, Boolean, ForeignKey, Table, Text, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -74,7 +74,7 @@ class ExerciseHistoryModel(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_email = Column(String, ForeignKey("users.email"), nullable=False)
     exercise_id = Column(Integer, ForeignKey("exercises.id"), nullable=False)
-    performed_at = Column(DateTime, default=datetime.now)
+    performed_at = Column(DateTime, default=datetime, nullable=False)
     duration_minutes = Column(Float, nullable=True)
     reps = Column(Integer, nullable=True)
 
