@@ -7,6 +7,8 @@ from ..services.fitness_service import (
 )
 from ..services.fitness_coach_service import calculate_intensity, request_wod
 from ..services.auth_service import jwt_required
+from flask_jwt_extended import get_jwt_identity
+
 
 fitness_bp = Blueprint('fitness', __name__)
 
@@ -36,7 +38,10 @@ def get_exercise(exercise_id):
 @jwt_required
 def get_wod():
     try:
-        exercises_with_muscles = request_wod()
+        
+        user_email = get_jwt_identity()
+
+        exercises_with_muscles = request_wod(user_email)
         
         wod_exercises = []
         for exercise, muscle_groups in exercises_with_muscles:
