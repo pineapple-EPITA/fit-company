@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import unittest
 from src.fit.app import app
 from src.fit.database import init_db, db_session
@@ -74,9 +77,9 @@ class TestUserAPI(unittest.TestCase):
         )
         
         # Assert response
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, 400)
         data = json.loads(response.data)
         self.assertIn('error', data)
 
 if __name__ == '__main__':
-    unittest.main() 
+    unittest.main()

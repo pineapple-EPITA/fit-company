@@ -1,5 +1,8 @@
-import pytest
+import sys
 import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+import pytest
 import tempfile
 from src.fit.app import app
 from src.fit.database import init_db, db_session
@@ -29,4 +32,4 @@ def db():
     
     # Teardown
     db.close()
-    Base.metadata.drop_all(bind=db.get_bind()) 
+    Base.metadata.drop_all(bind=db.get_bind())
