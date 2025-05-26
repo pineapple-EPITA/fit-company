@@ -1,5 +1,5 @@
-from flask import Blueprint, request, jsonify
-import datetime
+from flask import Blueprint, request, jsonify, g
+from datetime import datetime
 import random
 from ..models_dto import WodResponseSchema, WodExerciseSchema, MuscleGroupImpact
 from ..services.fitness_service import (
@@ -39,8 +39,7 @@ def get_exercise(exercise_id):
 @jwt_required
 def get_wod():
     try:
-        
-        user_email = get_jwt_identity()
+        user_email = g.user_email
 
         exercises_with_muscles = request_wod(user_email)
         
@@ -70,7 +69,7 @@ def get_wod():
         
         response = WodResponseSchema(
             exercises=wod_exercises,
-            generated_at=datetime.datetime.now(datetime.UTC).isoformat()
+            generated_at = datetime.now().isoformat()
         )
         
         return jsonify(response.model_dump()), 200
@@ -83,7 +82,7 @@ def get_wod():
 @jwt_required
 def get_performed_exercises_yesterday():
     try:
-        user_email = get_jwt_identity()
+        user_email = g.user_email
         yesterday_exercises = get_exercises_performed_yesterday(user_email)
         
         if not yesterday_exercises:
@@ -98,7 +97,7 @@ def get_performed_exercises_yesterday():
 @jwt_required
 def get_exercise_history():
     try:
-        user_email = get_jwt_identity()
+        user_email = g.user_email
         history = get_exercises_performed(user_email)
         
         if not history:

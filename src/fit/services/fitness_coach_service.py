@@ -3,15 +3,16 @@ from ..models_db import ExerciseModel, MuscleGroupModel, exercise_muscle_groups,
 from ..database import db_session
 import random
 from datetime import datetime, timedelta, time
+import time as pytime
 
 def heavy_computation(duration_seconds: int = 3):
     """
     Perform CPU-intensive calculations to simulate heavy processing.
     Uses matrix operations which are CPU-intensive.
     """
-    start_time = time()
+    start_time = pytime.time()
     i = 0
-    while (time() - start_time) < duration_seconds:
+    while (pytime.time() - start_time) < duration_seconds:
         j = 0
         while j < 1000000:
             j += 1
@@ -40,17 +41,17 @@ def request_wod(user_email: str) -> List[Tuple[ExerciseModel, List[Tuple[MuscleG
     try:
         # calculate yesterday date range (00:00 to 23:59:59)
         today = datetime.now().date()
-        yesterday_start = datetime.combine(today - timedelta(days=1), datetime.min.time())
-        yesterday_end = datetime.combine(today - timedelta(days=1), datetime.max.time())
+        yesterday_date = today - timedelta(days=1)
 
-        # query exercise IDs the user did yesterday
+        yesterday_start = datetime.combine(yesterday_date, time.min) 
+        yesterday_end = datetime.combine(yesterday_date, time(23, 59, 59, 999999))
+
         yesterday_exercise_ids = db.query(ExerciseHistoryModel.exercise_id).filter(
             ExerciseHistoryModel.user_email == user_email,
             ExerciseHistoryModel.performed_at >= yesterday_start,
             ExerciseHistoryModel.performed_at <= yesterday_end
         ).distinct().all()
 
-        # flatten to list of ints
         yesterday_exercise_ids = [eid for (eid,) in yesterday_exercise_ids]
 
         # get all exercises excluding those from yesterday
@@ -63,7 +64,6 @@ def request_wod(user_email: str) -> List[Tuple[ExerciseModel, List[Tuple[MuscleG
         if len(exercises) < 6:
             exercises = db.query(ExerciseModel).all()
 
-        # randomly pick up to 6 exercises
         selected_exercises = random.sample(exercises, 6) if len(exercises) >= 6 else exercises
 
         result = []
