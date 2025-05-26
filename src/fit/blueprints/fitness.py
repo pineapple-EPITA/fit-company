@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 import datetime
 import random
-from ..models_dto import WodResponseSchema, WodExerciseSchema, MuscleGroupImpact, ExerciseHistoryModel
+from ..models_dto import WodResponseSchema, WodExerciseSchema, MuscleGroupImpact
 from ..services.fitness_service import (
     get_all_exercises, get_exercise_by_id, get_exercises_by_muscle_group, get_exercises_performed_yesterday,
     get_exercises_performed
@@ -99,7 +99,7 @@ def get_performed_exercises_yesterday():
 def get_exercise_history():
     try:
         user_email = get_jwt_identity()
-        history = ExerciseHistoryModel.get_exercises_performed(user_email)
+        history = get_exercises_performed(user_email)
         
         if not history:
             return jsonify({"message": "No exercise history found"}), 200
