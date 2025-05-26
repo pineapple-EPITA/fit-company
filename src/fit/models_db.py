@@ -19,7 +19,6 @@ class UserModel(Base):
     onboarded = Column(String, default="false", nullable=False)
     
     exercise_histories = relationship("ExerciseHistoryModel", back_populates="user")
-
     def __repr__(self):
         return f"<User(email='{self.email}', name='{self.name}', role='{self.role}')>"
 
