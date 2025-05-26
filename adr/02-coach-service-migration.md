@@ -14,7 +14,6 @@ We will use Nginx as the Strangler Fig proxy. Initially, all traffic (especially
 - **Flexibility**: The Nginx configuration can be updated to route specific endpoints to the new microservice as it becomes available.
 - **Simplicity**: Using Nginx as a reverse proxy is a well-established pattern, making it easy to maintain and extend. 
 
-
 ## Reasoning
 - **Isolation of concerns**: Makes future development and scaling easier.
 - **Improved testing and deployment**: Coach service can be independently deployed and load-tested.
@@ -40,7 +39,3 @@ We will use Nginx as the Strangler Fig proxy. Initially, all traffic (especially
 > Coach:
 - Peak users supported: 250 VUs
 - Avg response time: 95ms
-
-## Alternatives Considered
-- Big-bang switch without proxy (too risky)
-- Full rewrite with new data schema (out of scope for this phase)
