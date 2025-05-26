@@ -77,7 +77,12 @@ def request_wod(user_email: str) -> List[Tuple[ExerciseModel, List[Tuple[MuscleG
             ).filter(
                 exercise_muscle_groups.c.exercise_id == exercise.id
             )
-            muscle_groups = [(mg, is_primary) for mg, is_primary in stmt.all()]
+            muscle_groups = stmt.all()
+
+            if not muscle_groups:
+                print(f"Skipping exercise {exercise.id} - no muscle groups found")
+                continue
+
             result.append((exercise, muscle_groups))
 
         return result

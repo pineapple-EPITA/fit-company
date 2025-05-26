@@ -1,14 +1,14 @@
 from flask import Blueprint, request, jsonify
 import datetime
 import random
-from ..models_dto import WodResponseSchema, WodExerciseSchema, MuscleGroupImpact, ExerciseHistoryModel
+from ..models_dto import WodResponseSchema, WodExerciseSchema, MuscleGroupImpact
+from ..models_db import ExerciseHistoryModel
 from ..services.fitness_service import (
     get_all_exercises, get_exercise_by_id, get_exercises_by_muscle_group, get_exercises_performed_yesterday,
     get_exercises_performed
 )
 from ..services.fitness_coach_service import calculate_intensity, request_wod
-from ..services.auth_service import jwt_required
-from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 
 fitness_bp = Blueprint('fitness', __name__)
@@ -36,27 +36,31 @@ def get_exercise(exercise_id):
         return jsonify({"error": "Error retrieving exercise", "details": str(e)}), 500
 
 @fitness_bp.route("/fitness/wod", methods=["GET"])
-@jwt_required
+@jwt_required()
 def get_wod():
     try:
-        
         user_email = get_jwt_identity()
+        print(f"get_wod: user_email = {user_email}")
 
         exercises_with_muscles = request_wod(user_email)
-        
+        print(f"get_wod: Received {len(exercises_with_muscles)} exercises")
+
         wod_exercises = []
         for exercise, muscle_groups in exercises_with_muscles:
-            muscle_impacts = [
-                MuscleGroupImpact(
-                    id=mg.id,
-                    name=mg.name,
-                    body_part=mg.body_part,
-                    is_primary=is_primary,
-                    intensity=calculate_intensity(exercise.difficulty) * (1.2 if is_primary else 0.8)
+            print(f"Processing Exercise ID: {exercise.id}, Name: {exercise.name}")
+            muscle_impacts = []
+            for mg, is_primary in muscle_groups:
+                print(f"Muscle: {mg.name}, Primary: {is_primary}")
+                muscle_impacts.append(
+                    MuscleGroupImpact(
+                        id=mg.id,
+                        name=mg.name,
+                        body_part=mg.body_part,
+                        is_primary=is_primary,
+                        intensity=calculate_intensity(exercise.difficulty) * (1.2 if is_primary else 0.8)
+                    )
                 )
-                for mg, is_primary in muscle_groups
-            ]
-            
+
             wod_exercise = WodExerciseSchema(
                 id=exercise.id,
                 name=exercise.name,
@@ -67,20 +71,24 @@ def get_wod():
                 suggested_reps=random.randint(8, 15)
             )
             wod_exercises.append(wod_exercise)
-        
+
         response = WodResponseSchema(
             exercises=wod_exercises,
             generated_at=datetime.datetime.now(datetime.UTC).isoformat()
         )
-        
+
         return jsonify(response.model_dump()), 200
-        
+
     except Exception as e:
-        return jsonify({"error": "Error generating workout of the day", "details": str(e)}), 500 
-    
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "error": "Error generating workout of the day",
+            "details": str(e)
+        }), 500
 
 @fitness_bp.route("/fitness/exercises/yesterday", methods=["GET"])
-@jwt_required
+@jwt_required()
 def get_performed_exercises_yesterday():
     try:
         user_email = get_jwt_identity()
@@ -95,7 +103,7 @@ def get_performed_exercises_yesterday():
         return jsonify({"error": "Error retrieving yesterday's exercises", "details": str(e)}), 500
     
 @fitness_bp.route("/fitness/exercises/history", methods=["GET"])
-@jwt_required
+@jwt_required()
 def get_exercise_history():
     try:
         user_email = get_jwt_identity()

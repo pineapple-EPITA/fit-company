@@ -5,6 +5,7 @@ from typing import List, Optional
 import random
 import string
 import hashlib
+import re
 
 def generate_random_password(length=10):
     """Generate a random password of specified length"""
