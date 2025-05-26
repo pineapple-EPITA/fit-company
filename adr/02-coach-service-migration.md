@@ -7,7 +7,7 @@ Accepted
 The monolith application is being migrated to a microservices architecture. To ensure zero downtime and a smooth transition, a Strangler Fig pattern is being implemented using a reverse proxy (Nginx).
 
 ## Decision
-We will use Nginx as the Strangler Fig proxy. Initially, all traffic (especially /api/wod endpoints) will be routed to the existing monolith. The Nginx configuration is set up to allow easy switching of traffic to the new "Coach" microservice when it is ready.
+We've chosen Nginx to act as our "strangler fig" proxy. Initially, all incoming traffic, especially to our /api/wod endpoints, will continue to go to our existing monolith. The Nginx setup makes it super easy to redirect this traffic to our new "Coach" microservice as soon as it's ready.
 
 ## Consequences
 - **Zero Downtime**: The proxy allows us to gradually shift traffic without disrupting users.
@@ -15,16 +15,16 @@ We will use Nginx as the Strangler Fig proxy. Initially, all traffic (especially
 - **Simplicity**: Using Nginx as a reverse proxy is a well-established pattern, making it easy to maintain and extend. 
 
 ## Reasoning
-- **Isolation of concerns**: Makes future development and scaling easier.
-- **Improved testing and deployment**: Coach service can be independently deployed and load-tested.
-- **Supports future microservice architecture goals**.
+- **Clearer Architecture**: By separating the "Workout of the Day" (WOD) logic into its own "Coach" service, we're building a much cleaner and more organized system.
+- **Independent Development**: The Coach service can be developed, tested, and scaled on its own without affecting the monolith. This means faster development cycles and fewer headaches.
+- **Ready for the Future**: This migration isn't just about the Coach service; it's setting the stage for a fully microservices-based platform.
 
 ## Migration Strategy
-- Initially, all traffic routes to the monolith.
-- Proxy configured to forward specific traffic (e.g., internal requests or test users) to Coach.
-- Monitor system behavior under load using the K6 script (`tests/load/load-test-k6.js`).
-- Gradually increase percentage of traffic routed to Coach, ensuring correctness and uptime.
-- Final switch-over once confidence and performance are validated.
+- **Starting**: Right now, all traffic still goes to the monolith.
+- **Gradual Shift**: We'll configure the proxy to send specific traffic (like internal requests or tests from our team) to the new Coach service first.
+- **Testing**: We'll use our K6 script (tests/load/load-test-k6.js) to rigorously test the system under expected user loads.
+- **Traffic**: Once we're confident, we'll slowly increase the percentage of live user traffic routed to the Coach service, always keeping a close eye on performance and stability.
+- **Finalize**: Once we've validated everything, we'll make the full switch!
 
 ## Outcome
 - K6 load tests (see results below) show the Coach microservice performs reliably under expected user loads.
