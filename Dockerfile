@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY pyproject.toml .
 COPY src/ src/
 COPY main.py .
+COPY tests/ tests/
 
 # Install Python dependencies
 RUN pip install --no-cache-dir .
@@ -26,5 +27,9 @@ RUN pip install --no-cache-dir .
 # Expose port
 EXPOSE 5000
 
-# Run the application
-CMD ["python", "main.py"] 
+# Default: Run the application
+CMD ["python", "main.py"]
+
+# To run tests in Docker:
+# docker build -t fit-app .
+# docker run --rm fit-app pytest -v 
