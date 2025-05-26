@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, g
 from datetime import datetime
 import random
-from ..models_dto import WodResponseSchema, WodExerciseSchema, MuscleGroupImpact
+from ..models_dto import WodResponseSchema, WodExerciseSchema, MuscleGroupImpact, ExerciseHistoryCreateSchema, ExerciseHistoryResponseSchema
 from ..models_db import ExerciseHistoryModel
 from ..services.fitness_service import (
     get_all_exercises, get_exercise_by_id, get_exercises_by_muscle_group, get_exercises_performed_yesterday,
@@ -9,6 +9,8 @@ from ..services.fitness_service import (
 )
 from ..services.fitness_coach_service import calculate_intensity, request_wod
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from pydantic import ValidationError
+from ..database import db_session
 
 
 fitness_bp = Blueprint('fitness', __name__)
@@ -115,3 +117,30 @@ def get_exercise_history():
         
     except Exception as e:
         return jsonify({"error": "Error retrieving exercise history", "details": str(e)}), 500
+
+@fitness_bp.route("/fitness/exercises/history", methods=["POST"])
+@jwt_required()
+def add_exercise_history():
+    try:
+        user_email = g.user_email
+        history_data = request.get_json()
+        history = ExerciseHistoryCreateSchema.model_validate(history_data)
+        
+        db = db_session()
+        new_history = ExerciseHistoryModel(
+            user_email=user_email,
+            exercise_id=history.exercise_id,
+            performed_at=history.performed_at or datetime.now(),
+            duration_minutes=history.duration_minutes,
+            reps=history.reps
+        )
+        db.add(new_history)
+        db.commit()
+        db.refresh(new_history)
+        db.close()
+        
+        return jsonify(ExerciseHistoryResponseSchema.model_validate(new_history).model_dump()), 201
+    except ValidationError as e:
+        return jsonify({"error": "Invalid exercise history data", "details": e.errors()}), 400
+    except Exception as e:
+        return jsonify({"error": "Error adding exercise history", "details": str(e)}), 500

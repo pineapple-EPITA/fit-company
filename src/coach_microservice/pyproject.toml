@@ -1,0 +1,13 @@
+[project]
+name = "coach_microservice"
+version = "0.1.0"
+description = "Coach microservice for Fit Company - handles WOD generation"
+requires-python = ">=3.10"
+dependencies = [
+    "Flask",
+    "Flask-JWT-Extended",
+    "SQLAlchemy",
+    "psycopg2-binary",
+    "pydantic",
+    "requests"
+] 

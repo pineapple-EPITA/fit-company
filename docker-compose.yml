@@ -5,7 +5,7 @@ services:
     ports:
       - "5001:5000"
     environment:
-      - DATABASE_URL=postgresql://postgres:docker@db:5433/fit-db
+      - DATABASE_URL=postgresql://postgres:docker@db:5432/fit-db
     depends_on:
       db:
         condition: service_healthy
@@ -38,6 +38,31 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - app
+      - user_microservice
+      - coach_microservice
+    networks:
+      - fit
+
+  user_microservice:
+    build: ./src/user_microservice
+    ports:
+      - "5002:5002"
+    environment:
+      - DATABASE_URL=postgresql://postgres:docker@db:5432/fit-db
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - fit
+
+  coach_microservice:
+    build: ./src/coach_microservice
+    ports:
+      - "5003:5003"
+    environment:
+      - JWT_SECRET_KEY=your-secret-key
+    depends_on:
+      - user_microservice
     networks:
       - fit
 
