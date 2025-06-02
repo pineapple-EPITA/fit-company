@@ -13,7 +13,7 @@ After some back-and-forth with the team, we decided to break out the WOD generat
 ## Implementation Steps
 
 1. **Phase 1: Getting Ready (Current)**
-   - Build the new coach service with Flask
+   - Separate the new coach service with Flask (the logic is used to be in the fit/services/fitness_coach.py)
    - Add health checks and monitoring
    - Set up Docker stuff
    - Test it locally with docker-compose
@@ -29,11 +29,11 @@ After some back-and-forth with the team, we decided to break out the WOD generat
    - Keep the old endpoint ready just in case
 
 4. **Phase 4: Cleanup**
-   - Once we're confident, remove the old code
+   - Once we're confident, we will remove the old code
    - Update docs
    - Clean up the nginx config
 
-## Technical Stuff
+## Technical approaches
 
 ### API Design
 We kept the API simple with a single endpoint for WOD generation. Here's what we're using:
@@ -91,8 +91,21 @@ We're using Nginx as our reverse proxy because:
 - Takes care of SSL/TLS termination
 
 ### How It Works
-- Flask app with JWT auth
-- No DB access (we get what we need from the monolith)
+The Coach microservice is a Flask app secured with JWT authentication.
+
+No DB. Instead, it communicates with the monolith service via HTTP to:
+
+- Fetch the full list of available exercises
+
+- Fetch the user's recent workout history, specifically the exercises completed yesterday
+
+Once it has the data, the coach service:
+
+- Filters out any exercises the user completed yesterday
+
+- Randomly selects 6 non-repeating exercises from the remaining exercises
+
+- The final list of selected exercises is returned in a structured JSON response, along with the generation timestamp.
 - Docker for easy deployment
 - Nginx in front for routing
 

@@ -6,9 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()  
 
-
-MONOLITH_URL = os.getenv("MONOLITH_URL", "http://localhost:5003")
-
+MONOLITH_URL = os.getenv("MONOLITH_URL", "http://localhost:5000")
 
 def heavy_computation(duration_seconds: int = 3):
     """
