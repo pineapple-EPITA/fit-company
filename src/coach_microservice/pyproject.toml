@@ -9,5 +9,7 @@ dependencies = [
     "SQLAlchemy",
     "psycopg2-binary",
     "pydantic",
-    "requests"
+    "requests",
+    "python-dotenv",
+    "dotenv"
 ] 

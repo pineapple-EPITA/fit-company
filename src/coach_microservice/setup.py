@@ -10,7 +10,9 @@ setup(
         "SQLAlchemy",
         "psycopg2-binary",
         "pydantic",
-        "requests"
+        "requests",
+        "python-dotenv",
+        "dotenv"
     ],
     python_requires=">=3.10",
 ) 

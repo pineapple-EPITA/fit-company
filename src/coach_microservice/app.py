@@ -1,8 +1,8 @@
 from flask import Flask, jsonify, g
 from flask_jwt_extended import JWTManager, jwt_required
-from coach_microservice.services.wod_service import request_wod, calculate_intensity
+from services.wod_service import request_wod, calculate_intensity
 from datetime import datetime
-from coach_microservice.schema.dto import WodResponseSchema, WodExerciseSchema, MuscleGroupImpact
+from schema.dto import WodResponseSchema, WodExerciseSchema, MuscleGroupImpact
 import random
 
 app = Flask(__name__)
