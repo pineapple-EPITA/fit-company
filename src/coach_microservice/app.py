@@ -1,34 +1,65 @@
-from flask import Flask, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from models.models_dto import WODRequest, WODResponse
-from services.wod_service import WODService
+from flask import Flask, jsonify, g
+from flask_jwt_extended import JWTManager, jwt_required
+from coach_microservice.services.wod_service import request_wod, calculate_intensity
+from datetime import datetime
+from coach_microservice.schema.dto import WodResponseSchema, WodExerciseSchema, MuscleGroupImpact
+import random
 
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = 'your-secret-key'  # In production, use environment variable
 
-wod_service = WODService()
+jwt = JWTManager(app)
 
-@app.route('/health', methods=['GET'])
-def health_check():
-    return jsonify({"status": "healthy"}), 200
-
-@app.route('/wod', methods=['POST'])
+@app.route("/fitness/wod", methods=["GET"])
 @jwt_required()
-def generate_wod():
+def get_wod():
     try:
-        data = request.get_json()
-        wod_request = WODRequest(
-            user_id=get_jwt_identity(),
-            fitness_level=data.get('fitness_level', 'beginner'),
-            goals=data.get('goals', []),
-            equipment_available=data.get('equipment_available', [])
-        )
-        
-        wod_response = wod_service.generate_wod(wod_request)
-        return jsonify(wod_response.dict()), 200
-        
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        user_email = g.user_email 
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5003) 
+        exercises_with_muscles = request_wod(user_email)
+        print(f"get_wod: Received {len(exercises_with_muscles)} exercises")
+
+        wod_exercises = []
+        for exercise, muscle_groups in exercises_with_muscles:
+            print(f"Processing Exercise ID: {exercise.id}, Name: {exercise.name}")
+            muscle_impacts = []
+            for mg, is_primary in muscle_groups:
+                print(f"Muscle: {mg.name}, Primary: {is_primary}")
+                muscle_impacts.append(
+                    MuscleGroupImpact(
+                        id=mg.id,
+                        name=mg.name,
+                        body_part=mg.body_part,
+                        is_primary=is_primary,
+                        intensity=calculate_intensity(exercise.difficulty) * (1.2 if is_primary else 0.8)
+                    )
+                )
+
+            wod_exercise = WodExerciseSchema(
+                id=exercise.id,
+                name=exercise.name,
+                description=exercise.description,
+                difficulty=exercise.difficulty,
+                muscle_groups=muscle_impacts,
+                suggested_weight=random.uniform(5.0, 50.0),
+                suggested_reps=random.randint(8, 15)
+            )
+            wod_exercises.append(wod_exercise)
+
+        response = WodResponseSchema(
+            exercises=wod_exercises,
+            generated_at=datetime.now().isoformat()
+        )
+
+        return jsonify(response.model_dump()), 200
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "error": "Error generating workout of the day",
+            "details": str(e)
+        }), 500
+        
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5003)

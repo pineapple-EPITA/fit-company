@@ -1,84 +1,90 @@
-from models.models_dto import Exercise, WODRequest, WODResponse
 import random
-from typing import List, Dict
+from coach_microservice.db import db_session
+from ..models.models import ExerciseModel, ExerciseHistoryModel, MuscleGroupModel, exercise_muscle_groups
+from datetime import datetime, timedelta, time
+import time as pytime
+from typing import List, Tuple
 
-class WODService:
-    def __init__(self):
-        # Exercise database - in a real service, this would come from a database
-        self.exercises = {
-            "beginner": [
-                {"name": "Push-ups", "sets": 3, "reps": 10},
-                {"name": "Squats", "sets": 3, "reps": 15},
-                {"name": "Plank", "sets": 3, "duration": 30},
-            ],
-            "intermediate": [
-                {"name": "Burpees", "sets": 4, "reps": 12},
-                {"name": "Pull-ups", "sets": 4, "reps": 8},
-                {"name": "Mountain Climbers", "sets": 4, "duration": 45},
-            ],
-            "advanced": [
-                {"name": "Muscle-ups", "sets": 5, "reps": 6},
-                {"name": "Handstand Push-ups", "sets": 5, "reps": 8},
-                {"name": "Box Jumps", "sets": 5, "reps": 15},
-            ]
-        }
+def heavy_computation(duration_seconds: int = 3):
+    """
+    Perform CPU-intensive calculations to simulate heavy processing.
+    Uses matrix operations which are CPU-intensive.
+    """
+    start_time = pytime.time()
+    i = 0
+    while (pytime.time() - start_time) < duration_seconds:
+        j = 0
+        while j < 1000000:
+            j += 1
+        i += 1
 
-    def generate_wod(self, request: WODRequest) -> WODResponse:
-        """
-        Generate a Workout of the Day (WOD) based on user's fitness level and goals
-        """
-        # Select exercises based on fitness level
-        level = request.fitness_level.lower()
-        available_exercises = self.exercises.get(level, self.exercises["beginner"])
-        
-        # Filter exercises based on available equipment
-        filtered_exercises = [
-            ex for ex in available_exercises 
-            if self._is_equipment_available(ex["name"], request.equipment_available)
-        ]
-        
-        # Select 4-6 exercises for the WOD
-        num_exercises = random.randint(4, 6)
-        selected_exercises = random.sample(filtered_exercises, min(num_exercises, len(filtered_exercises)))
-        
-        # Convert to Exercise objects
-        exercises = [
-            Exercise(
-                name=ex["name"],
-                sets=ex["sets"],
-                reps=ex.get("reps", 0),
-                duration=ex.get("duration", None)
+def calculate_intensity(difficulty: int) -> float:
+    """
+    Calculate the intensity of an exercise based on its difficulty level (1-5).
+    Returns a value between 0.0 and 1.0.
+    """
+    # Convert difficulty (1-5) to intensity (0.0-1.0)
+    return (difficulty - 1) / 4.0
+
+
+def request_wod(user_email: str) -> List[Tuple[ExerciseModel, List[Tuple[MuscleGroupModel, bool]]]]:
+    """
+    Request a workout of the day (WOD) for a specific user.
+    Avoid repeating exercises from the previous day.
+    Returns a list of tuples:
+    - ExerciseModel instance
+    - List of tuples: (MuscleGroupModel, is_primary)
+    """
+    heavy_computation(random.randint(1, 5)) # DO NOT REMOVE THIS LINE
+
+    db = db_session()
+    try:
+        # calculate yesterday date range (00:00 to 23:59:59)
+        today = datetime.now().date()
+        yesterday_date = today - timedelta(days=1)
+
+        yesterday_start = datetime.combine(yesterday_date, time.min) 
+        yesterday_end = datetime.combine(yesterday_date, time(23, 59, 59, 999999))
+
+        yesterday_exercise_ids = db.query(ExerciseHistoryModel.exercise_id).filter(
+            ExerciseHistoryModel.user_email == user_email,
+            ExerciseHistoryModel.performed_at >= yesterday_start,
+            ExerciseHistoryModel.performed_at <= yesterday_end
+        ).distinct().all()
+
+        yesterday_exercise_ids = [eid for (eid,) in yesterday_exercise_ids]
+
+        # get all exercises excluding those from yesterday
+        if yesterday_exercise_ids:
+            exercises = db.query(ExerciseModel).filter(~ExerciseModel.id.in_(yesterday_exercise_ids)).all()
+        else:
+            exercises = db.query(ExerciseModel).all()
+
+        # if not enough exercises remain, fallback to all exercises
+        if len(exercises) < 6:
+            exercises = db.query(ExerciseModel).all()
+
+        selected_exercises = random.sample(exercises, 6) if len(exercises) >= 6 else exercises
+
+        result = []
+        for exercise in selected_exercises:
+            stmt = db.query(
+                MuscleGroupModel,
+                exercise_muscle_groups.c.is_primary
+            ).join(
+                exercise_muscle_groups,
+                MuscleGroupModel.id == exercise_muscle_groups.c.muscle_group_id
+            ).filter(
+                exercise_muscle_groups.c.exercise_id == exercise.id
             )
-            for ex in selected_exercises
-        ]
-        
-        # Calculate total duration (rough estimate)
-        total_duration = sum(
-            ex.sets * (ex.duration or 30)  # Assume 30s per rep if no duration specified
-            for ex in exercises
-        ) // 60  # Convert to minutes
-        
-        # Estimate calories burned (very rough estimate)
-        calories_burned = total_duration * 10  # Assume 10 calories per minute
-        
-        return WODResponse(
-            exercises=exercises,
-            total_duration=total_duration,
-            difficulty=level,
-            calories_burned=calories_burned
-        )
-    
-    def _is_equipment_available(self, exercise_name: str, available_equipment: List[str]) -> bool:
-        """
-        Check if the exercise can be performed with available equipment
-        """
-        # This is a simplified check - in a real service, we'd have a proper mapping
-        equipment_required = {
-            "Pull-ups": ["pull-up bar"],
-            "Muscle-ups": ["pull-up bar", "rings"],
-            "Box Jumps": ["box"],
-            "Handstand Push-ups": ["wall"],
-        }
-        
-        required = equipment_required.get(exercise_name, [])
-        return all(equip in available_equipment for equip in required) 
+            muscle_groups = stmt.all()
+
+            if not muscle_groups:
+                print(f"Skipping exercise {exercise.id} - no muscle groups found")
+                continue
+
+            result.append((exercise, muscle_groups))
+
+        return result
+    finally:
+        db.close()
