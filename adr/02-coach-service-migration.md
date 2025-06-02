@@ -83,6 +83,13 @@ We chose this design because:
 - Nginx handles routing and load balancing
 - Services communicate synchronously to maintain consistency
 
+### Why Nginx?
+We're using Nginx as our reverse proxy because:
+- It's battle-tested and super fast
+- Handles load balancing out of the box (crucial for scaling the coach service)
+- Makes the strangler fig pattern easy - just update the routing rules
+- Takes care of SSL/TLS termination
+
 ### How It Works
 - Flask app with JWT auth
 - No DB access (we get what we need from the monolith)
