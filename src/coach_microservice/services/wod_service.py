@@ -1,9 +1,10 @@
 import random
-from coach_microservice.db import db_session
-from ..models.models import ExerciseModel, ExerciseHistoryModel, MuscleGroupModel, exercise_muscle_groups
-from datetime import datetime, timedelta, time
 import time as pytime
-from typing import List, Tuple
+import requests
+import os
+
+MONOLITH_URL = os.getenv("MONOLITH_URL")
+
 
 def heavy_computation(duration_seconds: int = 3):
     """
@@ -26,65 +27,40 @@ def calculate_intensity(difficulty: int) -> float:
     # Convert difficulty (1-5) to intensity (0.0-1.0)
     return (difficulty - 1) / 4.0
 
+def get_yesterday_exercise(user_email:str):
+    response = requests.get(f"{MONOLITH_URL}/fitness/exercises/yesterday", params={"email": user_email})
+    response.raise_for_status()
+    exercises = response.json()  # list dict
+    ids = [ex["id"] for ex in exercises]
+    return ids
 
-def request_wod(user_email: str) -> List[Tuple[ExerciseModel, List[Tuple[MuscleGroupModel, bool]]]]:
+
+def get_all_exercises():
+    response = requests.get(f"{MONOLITH_URL}/fitness/exercises")
+    response.raise_for_status()
+    return response.json()
+
+def request_wod(user_email: str):
     """
-    Request a workout of the day (WOD) for a specific user.
-    Avoid repeating exercises from the previous day.
-    Returns a list of tuples:
-    - ExerciseModel instance
-    - List of tuples: (MuscleGroupModel, is_primary)
+    Call monolith to get exercises and history, then return a filtered WOD.
     """
-    heavy_computation(random.randint(1, 5)) # DO NOT REMOVE THIS LINE
+    heavy_computation(random.randint(1, 5)) 
 
-    db = db_session()
-    try:
-        # calculate yesterday date range (00:00 to 23:59:59)
-        today = datetime.now().date()
-        yesterday_date = today - timedelta(days=1)
+    yesterday_ex_ids = get_yesterday_exercise(user_email)  
+    all_exercises = get_all_exercises()  
 
-        yesterday_start = datetime.combine(yesterday_date, time.min) 
-        yesterday_end = datetime.combine(yesterday_date, time(23, 59, 59, 999999))
+    filtered_exercises = [
+        ex for ex in all_exercises if ex["id"] not in yesterday_ex_ids
+    ]
 
-        yesterday_exercise_ids = db.query(ExerciseHistoryModel.exercise_id).filter(
-            ExerciseHistoryModel.user_email == user_email,
-            ExerciseHistoryModel.performed_at >= yesterday_start,
-            ExerciseHistoryModel.performed_at <= yesterday_end
-        ).distinct().all()
+    # if there are less than 6 exercises after filtering, use all exercises 
+    if len(filtered_exercises) < 6:
+        filtered_exercises = all_exercises
 
-        yesterday_exercise_ids = [eid for (eid,) in yesterday_exercise_ids]
+    # randomly pick 6 exercises from the filtered list
+    selected = random.sample(filtered_exercises, 6) if len(filtered_exercises) >= 6 else filtered_exercises
 
-        # get all exercises excluding those from yesterday
-        if yesterday_exercise_ids:
-            exercises = db.query(ExerciseModel).filter(~ExerciseModel.id.in_(yesterday_exercise_ids)).all()
-        else:
-            exercises = db.query(ExerciseModel).all()
+    return selected  
 
-        # if not enough exercises remain, fallback to all exercises
-        if len(exercises) < 6:
-            exercises = db.query(ExerciseModel).all()
-
-        selected_exercises = random.sample(exercises, 6) if len(exercises) >= 6 else exercises
-
-        result = []
-        for exercise in selected_exercises:
-            stmt = db.query(
-                MuscleGroupModel,
-                exercise_muscle_groups.c.is_primary
-            ).join(
-                exercise_muscle_groups,
-                MuscleGroupModel.id == exercise_muscle_groups.c.muscle_group_id
-            ).filter(
-                exercise_muscle_groups.c.exercise_id == exercise.id
-            )
-            muscle_groups = stmt.all()
-
-            if not muscle_groups:
-                print(f"Skipping exercise {exercise.id} - no muscle groups found")
-                continue
-
-            result.append((exercise, muscle_groups))
-
-        return result
-    finally:
-        db.close()
+        
+        

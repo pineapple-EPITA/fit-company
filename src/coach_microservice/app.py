@@ -10,6 +10,7 @@ app.config['JWT_SECRET_KEY'] = 'your-secret-key'  # In production, use environme
 
 jwt = JWTManager(app)
 
+# Coach service exposes API to generate WODs
 @app.route("/fitness/wod", methods=["GET"])
 @jwt_required()
 def get_wod():
@@ -20,30 +21,32 @@ def get_wod():
         print(f"get_wod: Received {len(exercises_with_muscles)} exercises")
 
         wod_exercises = []
-        for exercise, muscle_groups in exercises_with_muscles:
-            print(f"Processing Exercise ID: {exercise.id}, Name: {exercise.name}")
+        for exercise in exercises_with_muscles:
+            muscle_groups = exercise.get("muscle_groups", []) 
+
             muscle_impacts = []
-            for mg, is_primary in muscle_groups:
-                print(f"Muscle: {mg.name}, Primary: {is_primary}")
+            for mg in muscle_groups:
                 muscle_impacts.append(
                     MuscleGroupImpact(
-                        id=mg.id,
-                        name=mg.name,
-                        body_part=mg.body_part,
-                        is_primary=is_primary,
-                        intensity=calculate_intensity(exercise.difficulty) * (1.2 if is_primary else 0.8)
+                        id=mg["id"],
+                        name=mg["name"],
+                        body_part=mg["body_part"],
+                        is_primary=mg["is_primary"],
+                        intensity=calculate_intensity(exercise["difficulty"]) * (1.2 if mg["is_primary"] else 0.8)
                     )
                 )
 
+
             wod_exercise = WodExerciseSchema(
-                id=exercise.id,
-                name=exercise.name,
-                description=exercise.description,
-                difficulty=exercise.difficulty,
+                id=exercise["id"],
+                name=exercise["name"],
+                description=exercise["description"],
+                difficulty=exercise["difficulty"],
                 muscle_groups=muscle_impacts,
                 suggested_weight=random.uniform(5.0, 50.0),
                 suggested_reps=random.randint(8, 15)
             )
+
             wod_exercises.append(wod_exercise)
 
         response = WodResponseSchema(
