@@ -2,8 +2,12 @@ import random
 import time as pytime
 import requests
 import os
+from dotenv import load_dotenv
 
-MONOLITH_URL = os.getenv("MONOLITH_URL")
+load_dotenv()  
+
+
+MONOLITH_URL = os.getenv("MONOLITH_URL", "http://localhost:5003")
 
 
 def heavy_computation(duration_seconds: int = 3):
@@ -27,13 +31,13 @@ def calculate_intensity(difficulty: int) -> float:
     # Convert difficulty (1-5) to intensity (0.0-1.0)
     return (difficulty - 1) / 4.0
 
+# Coach service should request monolith to get yesterday's user's exercices history
 def get_yesterday_exercise(user_email:str):
     response = requests.get(f"{MONOLITH_URL}/fitness/exercises/yesterday", params={"email": user_email})
     response.raise_for_status()
     exercises = response.json()  # list dict
     ids = [ex["id"] for ex in exercises]
     return ids
-
 
 def get_all_exercises():
     response = requests.get(f"{MONOLITH_URL}/fitness/exercises")
@@ -61,6 +65,3 @@ def request_wod(user_email: str):
     selected = random.sample(filtered_exercises, 6) if len(filtered_exercises) >= 6 else filtered_exercises
 
     return selected  
-
-        
-        
