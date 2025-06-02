@@ -1,76 +1,123 @@
 # ADR 02: Coach Service Migration
 
 ## Context
-The WOD (Workout of the Day) generation feature is currently part of the monolith application and is experiencing performance issues under load. The service takes up to 5 seconds to generate a response, which is affecting user experience as our user base grows.
+Our WOD (Workout of the Day) feature is struggling with performance as we grow. Users are waiting up to 5 seconds for their workouts, which is way too long. We need to do something about this before it starts hurting our user experience.
 
 ## Decision
-We will extract the WOD generation functionality into a separate microservice using the Strangler Fig pattern. This will allow us to:
-1. Scale the WOD generation independently
-2. Optimize the service for performance
-3. Reduce load on the main application
-4. Enable future enhancements without affecting the monolith
+After some back-and-forth with the team, we decided to break out the WOD generation into its own service. We're going with the Strangler Fig pattern because:
+1. It lets us move fast without breaking things
+2. We can scale the workout generation separately from the main app
+3. If something goes wrong, we can easily roll back
+4. The team can work on workout features without touching the monolith
 
 ## Implementation Steps
 
-1. **Phase 1: Preparation**
-   - Create new coach microservice with WOD generation logic
-   - Implement health check endpoint
-   - Set up Docker configuration
-   - Add service to docker-compose.yml
+1. **Phase 1: Getting Ready (Current)**
+   - Build the new coach service with Flask
+   - Add health checks and monitoring
+   - Set up Docker stuff
+   - Test it locally with docker-compose
 
-2. **Phase 2: Strangler Fig Implementation**
-   - Update nginx configuration to route /fitness/wod to the new service
-   - Keep the old endpoint in the monolith for fallback
-   - Monitor performance and error rates
+2. **Phase 2: The Switch**
+   - Update nginx to send /fitness/wod to the new service
+   - Keep the old code running as backup
+   - Watch the metrics like a hawk
 
-3. **Phase 3: Migration**
-   - Gradually increase traffic to the new service
-   - Monitor performance metrics
-   - Keep the old endpoint as fallback
+3. **Phase 3: Moving Traffic**
+   - Start with 10% of traffic
+   - If it looks good, bump it up slowly
+   - Keep the old endpoint ready just in case
 
 4. **Phase 4: Cleanup**
-   - Remove WOD generation code from monolith
-   - Update documentation
-   - Remove fallback routing
+   - Once we're confident, remove the old code
+   - Update docs
+   - Clean up the nginx config
 
-## Technical Details
+## Technical Stuff
 
-### Service Architecture
-- Flask-based microservice
-- JWT authentication
-- No direct database access (stateless)
-- Docker containerization
-- Nginx reverse proxy
+### API Design
+We kept the API simple with a single endpoint for WOD generation. Here's what we're using:
 
-### Performance Targets
-- 95th percentile response time < 5s
-- Error rate < 1%
-- Support for 100 concurrent users
+1. The endpoint in `src/coach_microservice/app.py`:
+```python
+@app.route("/fitness/wod", methods=["GET"])
+@jwt_required()
+def get_wod():
+    # Returns a WodResponseSchema containing:
+    # - List of exercises with muscle group impacts
+    # - Generation timestamp
+```
+
+2. The data models in `src/coach_microservice/schema/dto.py`:
+```python
+class WodResponseSchema:
+    exercises: List[WodExerciseSchema]
+    generated_at: datetime
+
+class WodExerciseSchema:
+    id: int
+    name: str
+    description: str
+    difficulty: int  # 1-5 scale
+    muscle_groups: List[MuscleGroupImpact]
+    suggested_weight: float
+    suggested_reps: int
+
+class MuscleGroupImpact:
+    id: int
+    name: str
+    body_part: str
+    is_primary: bool
+    intensity: float  # 0.0 to 1.0
+```
+
+We chose this design because:
+- Single responsibility: just handles WOD generation
+- Stateless: gets user history from monolith when needed
+- Simple data model: easy to understand and maintain
+- JWT auth: secure and stateless
+
+### Service Communication
+- Coach service makes HTTP calls to monolith to get user's exercise history
+- JWT tokens are used for authentication between services
+- Nginx handles routing and load balancing
+- Services communicate synchronously to maintain consistency
+
+### How It Works
+- Flask app with JWT auth
+- No DB access (we get what we need from the monolith)
+- Docker for easy deployment
+- Nginx in front for routing
+
+### What we're aiming for
+- Response time under 5s for 95% of requests
+- Less than 1% or zero errors :)
+- Handle 100 users at once without breaking a sweat
 
 ### Monitoring
-- Health check endpoint
-- Response time metrics
-- Error rate tracking
+- Health check endpoint (/health)
+- Response time tracking
+- Error counting
 - Load testing with k6
 
 ## Status
-In Progress - Phase 1
+Working on Phase 1 - got the basic service running, now adding tests
 
 ## Consequences
 
-### Positive
-- Improved scalability
+### The Good
 - Better performance
-- Independent deployment
-- Easier maintenance
+- Easier to scale
+- Can deploy workout changes without touching the main app
+- Simpler to maintain
 
-### Negative
-- Increased system complexity
-- Need for service coordination
-- Additional infrastructure costs
+### The Bad
+- More moving parts
+- Need to coordinate between services
+- Costs a bit more to run
 
-### Mitigations
-- Comprehensive monitoring
-- Fallback mechanisms
-- Gradual migration
-- Load testing
+### Our safety nets
+- Good monitoring
+- Easy rollback if needed
+- Taking it slow with the migration
+- Lots of testing before each step
