@@ -9,6 +9,8 @@ from ..services.user_service import (
 )
 from ..services.auth_service import admin_required, jwt_required
 from ..services.rabbitmq_service import rabbitmq_service
+from ..database import db_session
+from ..models_db import UserModel
 import os
 
 user_bp = Blueprint('user', __name__)
@@ -99,3 +101,21 @@ def get_profile():
         
     except Exception as e:
         return jsonify({"error": "Error retrieving profile", "details": str(e)}), 500
+    
+@user_bp.route("/users/wod_for_all", methods=["GET"])
+@admin_required
+def create_wod_for_all():
+    db = db_session()
+    users = db.query(UserModel).all()
+    db.close()
+
+    if not users:
+        return jsonify({"message": "No users found"}), 404
+
+    count = 0
+    for user in users:
+        if rabbitmq_service.publish_create_wod_job(user.email):
+            count += 1
+
+    return jsonify({"message": f"Create WOD job sent for {count} users"}), 200
+

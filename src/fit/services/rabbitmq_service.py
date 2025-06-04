@@ -1,7 +1,23 @@
 import os
 import pika
 import json
+from pydantic import BaseModel, field_validator
 from typing import Dict, Any
+import datetime
+
+class WodMessage(BaseModel):
+    user_email: str
+    timestamp: str
+    difficulty: int # 1-5 scale
+    
+    @field_validator('difficulty')
+    def difficulty_range(cls, v):
+        if not (1 <= int(v) <= 5):
+            raise ValueError('Difficulty must be between 1 and 5')
+        return v
+    
+def validate_message(data: dict) -> WodMessage:
+    return WodMessage(**data) 
 
 class RabbitMQService:
     def __init__(self):
@@ -29,7 +45,7 @@ class RabbitMQService:
         # Declare the main queue with message TTL of 10 minutes (600000 ms)
         # and max length of 100 messages
         arguments = {
-            "x-message-ttl": 600000,  # 10 minutes
+            "x-message-ttl": 60000,  # 1 minute
             "x-max-length": 100,
             "x-dead-letter-exchange": "dlx",  # Dead Letter Exchange
             "x-dead-letter-routing-key": f"{self.queue_name}-dead"
@@ -69,6 +85,21 @@ class RabbitMQService:
         except Exception as e:
             print(f"Error publishing message to RabbitMQ: {str(e)}")
             return False
+        
+    def publish_create_wod_job(self, user_email):
+        message = {
+            "user_email": user_email,
+            "timestamp": datetime.datetime.now().isoformat(),
+            "difficulty": 3  # default difficulty
+        }
+        
+        try:
+            validated_message = validate_message(message)
+            return self.publish_message(validated_message.model_dump())
+        except Exception as e:
+            print(f"Error validating or publishing message: {str(e)}")
+            return False
+
 
     def close(self):
         """Close the connection"""

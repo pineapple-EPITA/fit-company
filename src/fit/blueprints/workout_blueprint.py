@@ -5,7 +5,7 @@ from ..services.workout_service import get_last_workout_exercises, register_work
 from ..services.auth_service import  api_key_required
 
 workout_bp = Blueprint('workout', __name__)
-   
+
 
 @workout_bp.route("/last", methods=["POST"])
 @api_key_required
@@ -37,3 +37,4 @@ def perform_workout():
         return jsonify({"error": "Invalid workout data", "details": e.errors()}), 400
     except Exception as e:
         return jsonify({"error": "Error registering workout", "details": str(e)}), 500 
+    

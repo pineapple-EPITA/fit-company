@@ -11,14 +11,13 @@ class TokenSchema(BaseModel):
     access_token: str
     token_type: str
 
-
 class UserResponseSchema(UserSchema):
     password: str
 
 class LoginSchema(BaseModel):
     email: str
     password: str
- 
+
 class UserProfileSchema(BaseModel):
     weight: Optional[float] = None
     height: Optional[float] = None
