@@ -6,6 +6,6 @@ COPY . .
 
 RUN pip install --no-cache-dir .
 
-ENV PYTHONPATH=/app
+ENV PYTHONPATH=/app/src
 
 CMD ["python", "app.py"] 
