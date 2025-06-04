@@ -3,7 +3,7 @@ from typing import List, Tuple
 
 import requests
 from .models_db import ExerciseModel, MuscleGroupModel, exercise_muscle_groups
-from .database import db_session
+from .database import SessionLocal
 import random
 from time import time
 
@@ -63,7 +63,7 @@ def request_wod(user_email: str) -> List[Tuple[ExerciseModel, List[Tuple[MuscleG
     # Simulate heavy computation (AI model processing, complex calculations, etc.) for 1-5 seconds
     heavy_computation(random.randint(1, 5)) # DO NOT REMOVE THIS LINE
     
-    db = db_session()
+    db = SessionLocal()
     
     try:
 

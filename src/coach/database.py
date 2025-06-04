@@ -1,27 +1,23 @@
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import sessionmaker
 
-# Database connection settings from docker-compose.yml
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:docker@coach-db:5432/coach-db")
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
+engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-db_session = scoped_session(SessionLocal)
-
 Base = declarative_base()
 
-# Dependency to get db session
+def init_db():
+    """Initialize the database by creating all tables."""
+    from .models_db import Base, UserModel, MuscleGroupModel, ExerciseModel, WodModel
+    Base.metadata.create_all(bind=engine)
+
 def get_db():
-    db = db_session()
+    """Get a database session."""
+    db = SessionLocal()
     try:
         yield db
     finally:
-        db.close()
-
-def init_db():
-    # Import all models here so they are registered with the metadata
-    from .models_db import MuscleGroupModel, ExerciseModel
-    
-    Base.metadata.create_all(bind=engine) 
+        db.close() 

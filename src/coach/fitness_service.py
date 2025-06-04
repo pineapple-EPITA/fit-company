@@ -3,7 +3,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from .models_dto import MuscleGroup, Exercise, MuscleGroupWithPrimary
-from .database import db_session
+from .database import SessionLocal
 from .models_db import MuscleGroupModel, ExerciseModel, exercise_muscle_groups
 from sqlalchemy import select, join, func
 
@@ -11,7 +11,7 @@ def get_all_muscle_groups():
     """
     Get all muscle groups from the database
     """
-    db = db_session()
+    db = SessionLocal()
     try:
         muscle_groups = db.query(MuscleGroupModel).all()
         return [MuscleGroup.model_validate(
@@ -29,7 +29,7 @@ def get_muscle_group_by_id(muscle_group_id: int):
     """
     Get a specific muscle group by ID
     """
-    db = db_session()
+    db = SessionLocal()
     try:
         muscle_group = db.query(MuscleGroupModel).filter(MuscleGroupModel.id == muscle_group_id).first()
         if not muscle_group:
@@ -50,7 +50,7 @@ def get_all_exercises():
     """
     Get all exercises with their associated muscle groups
     """
-    db = db_session()
+    db = SessionLocal()
     try:
         exercises = db.query(ExerciseModel).all()
         
@@ -103,7 +103,7 @@ def get_exercise_by_id(exercise_id: int):
     """
     Get a specific exercise by ID with its associated muscle groups
     """
-    db = db_session()
+    db = SessionLocal()
     try:
         exercise = db.query(ExerciseModel).filter(ExerciseModel.id == exercise_id).first()
         if not exercise:
@@ -152,7 +152,7 @@ def get_exercises_by_muscle_group(muscle_group_id: int):
     """
     Get all exercises that target a specific muscle group
     """
-    db = db_session()
+    db = SessionLocal()
     try:
         exercises = db.query(ExerciseModel).join(
             exercise_muscle_groups,

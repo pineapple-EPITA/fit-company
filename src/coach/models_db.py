@@ -1,6 +1,8 @@
-from sqlalchemy import Column, String, Integer, Boolean, ForeignKey, Table, Text
+from sqlalchemy import Column, String, Integer, Boolean, ForeignKey, Table, Text, Date, JSON
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from .database import Base
+import datetime
 
 # Junction table for the many-to-many relationship between exercises and muscle groups
 exercise_muscle_groups = Table(
@@ -48,4 +50,32 @@ class ExerciseModel(Base):
 
     def __repr__(self):
         return f"<Exercise(id={self.id}, name='{self.name}', difficulty={self.difficulty})>"
+
+class WodModel(Base):
+    __tablename__ = "wods"
+
+    id = Column(Integer, primary_key=True)
+    user_email = Column(String, ForeignKey('users.email'), nullable=False)
+    date = Column(Date, nullable=False, default=datetime.date.today)
+    exercises = Column(JSON, nullable=False)  
+    generated_at = Column(String, nullable=False)
+    user = relationship("UserModel")
+
+    def __repr__(self):
+        return f"<Wod(id={self.id}, user_email='{self.user_email}', date='{self.date}')>"
+
+class UserModel(Base):
+    __tablename__ = "users"
+
+    email = Column(String, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    role = Column(String, nullable=False)
+    password_hash = Column(String, nullable=False)
+    weight = Column(Integer, nullable=True)
+    height = Column(Integer, nullable=True)
+    fitness_goal = Column(String, nullable=True)
+    onboarded = Column(String, default="false", nullable=False)
+
+    def __repr__(self):
+        return f"<User(email='{self.email}', name='{self.name}', role='{self.role}')>"
 

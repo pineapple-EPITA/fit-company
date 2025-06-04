@@ -17,11 +17,10 @@ def hash_password(password):
 
 def create_user(user: UserSchema) -> UserResponseSchema:
     """
-    Create a new user with a random password and persist it to the database
+    Create a new user with the provided password (if any) or a random password, and persist it to the database
     """
-    # Generate a random password
-    random_password = generate_random_password()
-    hashed_password = hash_password(random_password)
+    password = getattr(user, 'password', None) or generate_random_password()
+    hashed_password = hash_password(password)
     
     # Convert Pydantic model to SQLAlchemy model
     db_user = UserModel(
@@ -48,7 +47,7 @@ def create_user(user: UserSchema) -> UserResponseSchema:
         email=user.email,
         name=user.name,
         role=user.role,
-        password=random_password
+        password=password
     )
     
     return response

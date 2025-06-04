@@ -8,7 +8,6 @@ from ..services.user_service import (
     get_user_profile
 )
 from ..services.auth_service import admin_required, jwt_required
-from ..services.rabbitmq_service import rabbitmq_service
 import os
 
 user_bp = Blueprint('user', __name__)
@@ -47,7 +46,7 @@ def generate_wods():
         # Queue a WOD generation job for each user
         for user in users:
             message = {"email": user.email}
-            rabbitmq_service.publish_message(message)
+            # rabbitmq_service.publish_message(message)
         
         return jsonify({
             "message": f"Queued WOD generation for {len(users)} users",

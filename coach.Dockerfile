@@ -1,23 +1,20 @@
-# Use a Python image with uv pre-installed
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# Enable bytecode compilation
-ENV UV_COMPILE_BYTECODE=1
+# Install system dependencies for psycopg2
+RUN apt-get update && apt-get install -y libpq-dev gcc && rm -rf /var/lib/apt/lists/*
 
-# Copy from the cache instead of linking since it's a mounted volume
-ENV UV_LINK_MODE=copy
-
+COPY src/coach/requirements.txt ./requirements.txt
 COPY pyproject.toml uv.lock ./
-
 COPY main_coach.py /app/main_coach.py
+COPY src/coach /app/src/coach
 
-RUN uv sync
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
 ENV FLASK_ENV=development
-# ENV PYTHONPATH=/app/fit
+ENV PYTHONPATH=/app
 
 EXPOSE 5000
 
-CMD ["uv", "run", "main_coach.py"] 
+CMD ["python", "main_coach.py"] 
