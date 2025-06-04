@@ -38,3 +38,5 @@ def perform_workout():
     except Exception as e:
         return jsonify({"error": "Error registering workout", "details": str(e)}), 500 
     
+    
+    

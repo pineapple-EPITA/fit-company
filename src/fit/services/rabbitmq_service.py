@@ -8,13 +8,6 @@ import datetime
 class WodMessage(BaseModel):
     user_email: str
     timestamp: str
-    difficulty: int # 1-5 scale
-    
-    @field_validator('difficulty')
-    def difficulty_range(cls, v):
-        if not (1 <= int(v) <= 5):
-            raise ValueError('Difficulty must be between 1 and 5')
-        return v
     
 def validate_message(data: dict) -> WodMessage:
     return WodMessage(**data) 
@@ -72,7 +65,8 @@ class RabbitMQService:
         try:
             if not self.connection or self.connection.is_closed:
                 self.connect()
-
+                
+            print(f"[RabbitMQ] Sending payload: {message}") 
             self.channel.basic_publish(
                 exchange="",
                 routing_key=self.queue_name,
@@ -81,6 +75,7 @@ class RabbitMQService:
                     delivery_mode=2,  # make message persistent
                 )
             )
+            print("[RabbitMQ] Message sent")
             return True
         except Exception as e:
             print(f"Error publishing message to RabbitMQ: {str(e)}")
@@ -90,7 +85,6 @@ class RabbitMQService:
         message = {
             "user_email": user_email,
             "timestamp": datetime.datetime.now().isoformat(),
-            "difficulty": 3  # default difficulty
         }
         
         try:
@@ -99,7 +93,6 @@ class RabbitMQService:
         except Exception as e:
             print(f"Error validating or publishing message: {str(e)}")
             return False
-
 
     def close(self):
         """Close the connection"""

@@ -23,6 +23,7 @@ BOOTSTRAP_KEY = os.environ.get("BOOTSTRAP_KEY", "bootstrap-secret-key")
 def health():
     return {"status": "UP"}
 
+
 @app.route("/bootstrap/admin", methods=["POST"])
 def create_bootstrap_admin():
     try:
