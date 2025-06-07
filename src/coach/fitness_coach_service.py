@@ -67,6 +67,10 @@ def request_wod(user_email: str) -> List[Tuple[ExerciseModel, List[Tuple[MuscleG
     
     db = db_session()
     
+    # simulate a random failure for testing retries
+    if random.random() < 0.3:
+        raise Exception("Random failure for testing retries")
+    
     try:
         print(f"[WOD Service] Generating WOD for {user_email}")
         last_exercise_ids = get_last_workout_exercises(user_email)
