@@ -1,11 +1,13 @@
 import os
 from typing import List, Tuple
+from sqlalchemy.orm import joinedload
 
 import requests
-from .models_db import ExerciseModel, MuscleGroupModel, exercise_muscle_groups
+from .models_db import ExerciseModel, MuscleGroupModel, exercise_muscle_groups, WodModel, WodExerciseModel
 from .database import db_session
 import random
 from time import time
+from datetime import datetime
 
 def heavy_computation(duration_seconds: int = 3):
     """
@@ -66,7 +68,7 @@ def request_wod(user_email: str) -> List[Tuple[ExerciseModel, List[Tuple[MuscleG
     db = db_session()
     
     try:
-
+        print(f"[WOD Service] Generating WOD for {user_email}")
         last_exercise_ids = get_last_workout_exercises(user_email)
 
         available_exercises = db.query(ExerciseModel).filter(
@@ -83,6 +85,18 @@ def request_wod(user_email: str) -> List[Tuple[ExerciseModel, List[Tuple[MuscleG
         # Store today's exercises in history
         save_workout_exercises(user_email, [exercise.id for exercise in selected_exercises])
         
+        # Save generated wod in the db
+        wod = WodModel(
+            user_email=user_email, 
+            created_at=datetime.now(),
+            exercises=[WodExerciseModel(exercise_id=ex.id) for ex in selected_exercises])
+        try:
+            db.add(wod)
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            raise
+
         # For each exercise, get its muscle groups and whether they are primary
         result = []
         for exercise in selected_exercises:
@@ -100,5 +114,24 @@ def request_wod(user_email: str) -> List[Tuple[ExerciseModel, List[Tuple[MuscleG
             muscle_groups = [(mg, is_primary) for mg, is_primary in stmt.all()]
             result.append((exercise, muscle_groups))
         return result
+    finally:
+        db.close()
+    
+def get_latest_wod(user_email: str) -> WodModel:
+    """
+    Get the latest WOD for a user.
+    """
+    db = db_session()
+    try:
+        wod = (
+            db.query(WodModel)
+            .filter(WodModel.user_email == user_email)
+            .order_by(WodModel.created_at.desc())
+            .options(
+                joinedload(WodModel.exercises).joinedload(WodExerciseModel.exercise)
+            )
+            .first()
+        )
+        return wod
     finally:
         db.close()

@@ -1,6 +1,7 @@
-from sqlalchemy import Column, String, Integer, Boolean, ForeignKey, Table, Text
+from sqlalchemy import Column, String, Integer, Boolean, ForeignKey, Table, Text, DateTime
 from sqlalchemy.orm import relationship
 from .database import Base
+from datetime import datetime
 
 # Junction table for the many-to-many relationship between exercises and muscle groups
 exercise_muscle_groups = Table(
@@ -48,4 +49,42 @@ class ExerciseModel(Base):
 
     def __repr__(self):
         return f"<Exercise(id={self.id}, name='{self.name}', difficulty={self.difficulty})>"
+    
+
+class WodModel(Base):
+    __tablename__ = "wods"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_email = Column(String(100), nullable=False)
+    created_at = Column(DateTime, default=datetime.now)
+    
+    # Relationships
+    exercises = relationship("WodExerciseModel", back_populates="wod", cascade="all, delete")
+
+
+    def __repr__(self):
+        return f"<Wod(id={self.id}, user_email='{self.user_email}', exercise_id={self.exercise_id})>"
+    def serialize(self): # to convert to dict
+        return {
+            "id": self.id,
+            "user_email": self.user_email,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }
+    
+class WodExerciseModel(Base):
+    __tablename__ = "wod_exercises"
+    
+    id = Column(Integer, primary_key=True)
+    wod_id = Column(Integer, ForeignKey("wods.id", ondelete="CASCADE"))
+    exercise_id = Column(Integer, ForeignKey("exercises.id"))
+    
+    wod = relationship("WodModel", back_populates="exercises")
+    exercise = relationship("ExerciseModel")
+    
+    def serialize(self):
+        return {
+            "id": self.id,
+            "exercise_id": self.exercise_id,
+            "exercise_name": self.exercise.name if self.exercise else None
+        }
 

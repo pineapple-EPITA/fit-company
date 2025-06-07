@@ -4,6 +4,7 @@ import json
 from pydantic import BaseModel, field_validator
 from typing import Dict, Any
 import datetime
+import logging
 
 class WodMessage(BaseModel):
     user_email: str
@@ -66,7 +67,7 @@ class RabbitMQService:
             if not self.connection or self.connection.is_closed:
                 self.connect()
                 
-            print(f"[RabbitMQ] Sending payload: {message}") 
+            logging.info(f"[RabbitMQ] Sending payload: {message}") 
             self.channel.basic_publish(
                 exchange="",
                 routing_key=self.queue_name,
@@ -75,10 +76,10 @@ class RabbitMQService:
                     delivery_mode=2,  # make message persistent
                 )
             )
-            print("[RabbitMQ] Message sent")
+            logging.info("[RabbitMQ] Message sent")
             return True
         except Exception as e:
-            print(f"Error publishing message to RabbitMQ: {str(e)}")
+            logging.info(f"Error publishing message to RabbitMQ: {str(e)}")
             return False
         
     def publish_create_wod_job(self, user_email):
