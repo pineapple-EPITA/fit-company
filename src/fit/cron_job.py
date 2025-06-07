@@ -3,7 +3,7 @@ import os
 
 API_BASE_URL = os.getenv("MONOLITH_URL", "http://localhost:12101")
 USER_EMAIL = os.getenv("USER_EMAIL", "jane.doe@mail.com")
-USER_PASS = os.getenv("USER_PASS", "1(#mj0|KyC")
+USER_PASS = os.getenv("USER_PASS")
 
 
 # get token by logging in with user credentials
