@@ -28,11 +28,11 @@ def callback(ch, method, properties, body):
 def start_consumer():
     logging.info("Consumer thread started")
     credentials = pika.PlainCredentials(
-        username=os.getenv("RABBITMQ_DEFAULT_USER", "rabbit"),
-        password=os.getenv("RABBITMQ_DEFAULT_PASS", "docker")
+        username=os.getenv("RABBITMQ_DEFAULT_USER"),
+        password=os.getenv("RABBITMQ_DEFAULT_PASS")
     )   
     parameters = pika.ConnectionParameters(
-        host=os.getenv("RABBITMQ_HOST", "rabbitmq"),
+        host=os.getenv("RABBITMQ_HOST"),
         port=5672,
         credentials=credentials,
         heartbeat=600,
