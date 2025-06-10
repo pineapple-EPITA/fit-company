@@ -76,6 +76,9 @@ if random.random() < 0.3:
     raise Exception("Random failure for testing retries")
 ```
 
+### 4. Cron Job Script
+We created a cron job script that calls the WOD API when triggered. The script contains two functions: one retrieves the access token, and the other makes the API call.
+
 ## How can I strengthen the system
 1. Extract user microservice to handle user management as well as queue system inside.
 2. Add load balancing and support scaling the Coach service with multiple consumer instances.
