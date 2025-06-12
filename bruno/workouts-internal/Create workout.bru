@@ -1,0 +1,22 @@
+meta {
+  name: Create workout
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{endpoint}}/workouts/register
+  body: json
+  auth: inherit
+}
+
+headers {
+  X-API-Key: {{fit-api-key}}
+}
+
+body:json {
+  {
+    "email": "jane.doe@mail.com",
+    "exercises": [20,19,18]
+  }
+}

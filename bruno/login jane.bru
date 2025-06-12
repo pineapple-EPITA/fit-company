@@ -1,0 +1,18 @@
+meta {
+  name: login jane
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{endpoint}}/oauth/token
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "email": "jane.doe@mail.com",
+    "password": "{{admin-pass}}"
+  }
+}

@@ -1,0 +1,24 @@
+[project]
+name = "fit-mono"
+version = "0.1.0"
+description = "Blazing fast, gen AI fit company"
+readme = "README.md"
+authors = [
+]
+requires-python = ">=3.13"
+dependencies = [
+    "flask>=3.1.0",
+    "pydantic>=2.10.6",
+    "sqlalchemy>=2.0.0",
+    "psycopg2-binary>=2.9.9",
+    "pyjwt>=2.8.0",
+    "requests>=2.32.3",
+    "pika>=1.3.2",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.9.7",
+    "pytest>=8.3.5",
+]
+

@@ -1,0 +1,17 @@
+meta {
+  name: create wod
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{coach-endpoint}}/createWod
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "user_email":"jane.doe@mail.com"
+  }
+}

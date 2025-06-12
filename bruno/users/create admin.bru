@@ -1,0 +1,20 @@
+meta {
+  name: create admin
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{endpoint}}/users
+  body: json
+  auth: inherit
+}
+
+
+body:json {
+  {
+    "email": "jane.doe@mail.com",
+    "name": "Jane doe",
+    "role": "admin"
+  }
+}

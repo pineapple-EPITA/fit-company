@@ -1,0 +1,21 @@
+meta {
+  name: get user last workout
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{endpoint}}/workouts/last
+  body: json
+  auth: inherit
+}
+
+headers {
+  X-API-Key: {{fit-api-key}}
+}
+
+body:json {
+  {
+    "email":"jane.doe@mail.com"
+  }
+}

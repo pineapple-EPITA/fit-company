@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "fit-com",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

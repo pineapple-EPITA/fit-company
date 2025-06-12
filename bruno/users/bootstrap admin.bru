@@ -1,0 +1,22 @@
+meta {
+  name: bootstrap admin
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{endpoint}}/bootstrap/admin
+  body: json
+  auth: none
+}
+
+headers {
+  X-Bootstrap-Key: bootstrap-secret-key
+}
+
+body:json {
+  {
+    "email": "jane.doe@mail.com",
+    "name": "Jane Doe"
+  }
+}
