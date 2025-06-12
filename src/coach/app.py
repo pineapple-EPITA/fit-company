@@ -95,7 +95,7 @@ def user_create_wod(): # changed name because it was the same with the one in se
                 description=exercise.description,
                 difficulty=exercise.difficulty,
                 muscle_groups=muscle_impacts,
-                suggested_weight=random.uniform(5.0, 50.0),  # Random weight between 5 and 50 kg
+                suggested_weight=round(random.uniform(5.0, 50.0), 1),  # Random weight between 5 and 50 kg
                 suggested_reps=random.randint(8, 15)  # Random reps between 8 and 15
             )
             wod_exercises.append(wod_exercise)
