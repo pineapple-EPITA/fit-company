@@ -130,3 +130,4 @@ def perform_workout(workout_id: int, user_email: str):
             raise Exception("Workout not found or user does not have access to this workout")
     finally:
         db.close()
+        

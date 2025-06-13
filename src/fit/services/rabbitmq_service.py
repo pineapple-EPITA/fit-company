@@ -25,7 +25,9 @@ class RabbitMQService:
             self.connection = None
             self.channel = None
             self.queue_name = "createWodQueue"
+            self.workout_exchange = "workout.performed"
             self._is_initialized = True
+            
 
     def ensure_connection(self):
         """Ensure connection is established"""
@@ -104,16 +106,18 @@ class RabbitMQService:
         try:
             self.ensure_connection()
             
-            message = event_data.model_dump()
+            message_data = event_data.model_dump()
 
-            self.channel.exchange_declare(exchange='workout.performed', exchange_type='fanout')
-            logger.debug(f"Publishing workout.performed event: {message}")
+            self.channel.exchange_declare(exchange=self.workout_exchange, exchange_type='fanout')
+            logger.debug(f"Publishing workout.performed event: {message_data}")
 
             self.channel.basic_publish(
-                exchange='workout.performed',
+                exchange=self.workout_exchange,
                 routing_key='',
-                body=json.dumps(message),
-                properties=pika.BasicProperties(delivery_mode=2)
+                body=json.dumps(message_data),
+                properties=pika.BasicProperties(
+                    delivery_mode=2,
+                    content_type='application/json')
             )
             logger.info(f"[RabbitMQ] Published workout.performed event: {event_data}")
             return True
