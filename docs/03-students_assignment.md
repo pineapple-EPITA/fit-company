@@ -53,7 +53,7 @@ sequenceDiagram
 
 ## Step 3: Publish the workout performed event
 
-- When a user performs a workout, the coach service will publish an event to the workout.performed exchange
+- When a user performs a workout, the monolith will publish an event to the workout.performed exchange
 
 ## Step 4: Create a consumer in the stats service
 
