@@ -7,3 +7,5 @@ class CreatePerformedMessage(BaseModel):
     email: str
     workout_id: int 
     
+    
+    

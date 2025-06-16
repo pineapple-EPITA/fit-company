@@ -5,6 +5,8 @@ from ..services.workout_service import get_most_recent_workout_exercises, get_us
 from ..services.auth_service import  api_key_required, jwt_required
 from ..services.rabbitmq_service import rabbitmq_service
 from ..queue_messages import CreatePerformedMessage
+import datetime
+
 
 workout_bp = Blueprint('workout', __name__)
    

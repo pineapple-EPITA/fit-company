@@ -2,4 +2,6 @@ from pydantic import BaseModel
 
 class CreateStatsMessage(BaseModel):
     email: str
-    timestamp: str
+    workout_id: int
+
+

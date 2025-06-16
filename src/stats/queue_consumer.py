@@ -4,7 +4,7 @@ import json
 import logging
 from typing import Dict, Any
 
-from .queue_message import CreateWodMessage
+from .queue_message import CreateStatsMessage
 
 from .stats_service import generate_workout_stats
 
@@ -86,8 +86,8 @@ class StatsQueueConsumer:
         """Handle received messages"""
         try:
             logger.info(f"Starting to process message with delivery-tag: {method.delivery_tag}")
-            
-            message = CreateWodMessage.model_validate_json(body)
+            logger.info("Received raw body: %s", body)
+            message = CreateStatsMessage.model_validate_json(body)
             logger.debug(f"Successfully parsed message: {message.model_dump_json()}")
             
             # Extract user email from message
@@ -95,12 +95,11 @@ class StatsQueueConsumer:
             
             try:
                 workout_stats = generate_workout_stats(user_email)
-                if not workout_stats or not workout_stats[0]:
+                if not workout_stats:
                     raise ValueError("No workout statistics generated")
-                    
+
                 logger.info(f"Successfully generated workout statistics for user {user_email}")
                 
-                # Acknowledge message only after successful processing
                 ch.basic_ack(delivery_tag=method.delivery_tag)
                 logger.debug(f"Successfully acknowledged message {method.delivery_tag}")
                 
@@ -157,11 +156,11 @@ class StatsQueueConsumer:
 
 def run_consumer():
     # Create a singleton instance
-    wod_queue_consumer = StatsQueueConsumer()
+    stats_queue_consumer = StatsQueueConsumer()
     """Entry point to start the consumer"""
     # try:
     logger.info("Starting consumer")
-    wod_queue_consumer.start_consuming()
+    stats_queue_consumer.start_consuming()
 
 
 

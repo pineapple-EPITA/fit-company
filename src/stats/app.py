@@ -1,33 +1,42 @@
-from flask import Blueprint, jsonify, request
-from .models_db import WorkoutStats, ExercisePerformed
-from .database import db_session
+from flask import jsonify, request, Flask
+from .database import init_db
+from .stats_service import get_stats_by_user
+import logging
 
-stats_bp = Blueprint("stats", __name__)
 
-@stats_bp.route("/workout_stats/<int:workout_id>", methods=["GET"])
-def get_workout_stats(workout_id):
-    db = db_session()
-    try:
-        workout = db.query(WorkoutStats).filter(WorkoutStats.id == workout_id).first()
-        if not workout:
-            return jsonify({"error": "WorkoutStats not found"}), 404
-        
-        exercises = []
-        for ex in workout.exercises:
-            exercises.append({
-                "id": ex.id,
-                "name": ex.name,
-                "actual_reps": ex.actual_reps,
-                "actual_weight": ex.actual_weight,
-                "performed_at": ex.performed_at.isoformat() if ex.performed_at else None
-            })
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 
-        result = {
-            "id": workout.id,
-            "generated_at": workout.generated_at.isoformat() if workout.generated_at else None,
-            "user_email": workout.user_email,
-            "exercises": exercises
-        }
-        return jsonify(result), 200
-    finally:
-        db.close()
+app = Flask(__name__)
+app.logger.setLevel(logging.DEBUG)
+
+
+@app.route("/health")
+def health():
+    return {"status": "UP"}
+
+@app.route("/stats", methods=["POST"])
+def get_stats():
+    email = request.json.get("email")
+    if not email:
+        return jsonify({"error": "Missing email"}), 400
+
+    stats = get_stats_by_user(email)
+    if stats is None:
+        return jsonify({"error": "Failed to fetch stats"}), 500
+
+    return jsonify([s.model_dump() for s in stats]), 200
+
+def run_app():
+    """Entry point for the application script"""
+    # Initialize the database before starting the app
+    init_db()
+
+    app.run(host="0.0.0.0", port=5000, debug=True)
+
+if __name__ == "__main__":
+    run_app()
+
