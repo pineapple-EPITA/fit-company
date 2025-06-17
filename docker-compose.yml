@@ -184,6 +184,21 @@ services:
     networks:
       - fit
 
+
+  notification:
+    build:
+      context: .
+      dockerfile: notification.Dockerfile
+    volumes:
+      - ./src/notification:/app
+    ports:
+      - "12112:5005"
+    depends_on:
+      - billing
+    networks:
+      - fit
+
+
   rabbitmq:
     image: rabbitmq:3-management
     ports:
