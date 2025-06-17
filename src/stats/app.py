@@ -18,7 +18,7 @@ app.logger.setLevel(logging.DEBUG)
 def health():
     return {"status": "UP"}
 
-@app.route("/stats", methods=["POST"])
+@app.route("/statics", methods=["POST"])
 def get_stats():
     email = request.json.get("email")
     if not email:
@@ -30,17 +30,17 @@ def get_stats():
 
     return jsonify([s.model_dump() for s in stats]), 200
 
-@app.route("/milestone", methods=["POST"])
+@app.route("/statics/you", methods=["POST"])
 def get_milestone():
     email = request.json.get("email")
     if not email:
         return jsonify({"error": "Missing email"}), 400
 
-    milestone = jsonify(check_milestone(email))
+    milestone = check_milestone(email)
     if milestone is None:
         return jsonify({"error": "Failed to fetch milestone"}), 500
 
-    return milestone, 200
+    return milestone.model_dump(), 200
 
 def run_app():
     """Entry point for the application script"""

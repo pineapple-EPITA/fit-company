@@ -17,3 +17,15 @@ class WorkoutStatsSchema(BaseModel):
     fitness_goal: Optional[str] = None
     exercises: List[ExercisePerformedSchema]
     total_calories_burned: Optional[float] = None
+    
+
+
+class UserResponse(BaseModel):
+    name: str
+    user_email: str
+    total_workout_performed: Optional[int] = None
+    total_calories_burned: Optional[float] = None
+    total_performed_exercises: Optional[int] = None
+    milestone_achieved: List[dict]
+    generated_at: datetime
+    

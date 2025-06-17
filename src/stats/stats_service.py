@@ -6,7 +6,7 @@ import requests
 from typing import Optional, List
 
 from .models_db import ExercisePerformed, WorkoutStats
-from .models_dto import WorkoutStatsSchema, ExercisePerformedSchema
+from .models_dto import WorkoutStatsSchema, ExercisePerformedSchema, UserResponse
 from .database import db_session
 
 logger = logging.getLogger(__name__)
@@ -191,6 +191,22 @@ def calculate_total_performed_exercises(user_email: str):
     finally:
         db.close()
         
+def calculate_total_wods_performed(user_email: str):
+    """
+    Calculate the total number of workouts performed by a user.
+    """
+    db = db_session()
+    try:
+        stats = (
+            db.query(WorkoutStats)
+            .filter(WorkoutStats.user_email == user_email)
+            .all()
+        )
+        total_wods = len(stats)
+        return total_wods
+    finally:
+        db.close()
+        
         
 def check_milestone(user_email: str):
     """
@@ -201,21 +217,37 @@ def check_milestone(user_email: str):
     name = user_data["name"]
     total_calories = calculate_total_calories_burned(user_email)
     total_exercises = calculate_total_performed_exercises(user_email)
+    total_wods = calculate_total_wods_performed(user_email)
     
-    # calories milestone
-    if total_calories >= 1000:
-        return f"Congratulations {name}! You've burned {total_calories} calories, road to 5000!"
-    elif total_calories >= 5000:
-        return f"Awesome work {name}! You've burned {total_calories} calories, keep pushing!"
-    elif total_calories >= 10000:
-        return f"OMG {name}! You've burned {total_calories} calories, you are god now!"
+    MILESTONES = {
+        "wod": [5, 10, 15],
+        "calories": [1000, 5000, 10000],
+        "exercises": [20, 50, 100]
+    }
     
-    # exercises milestone
-    if total_exercises >= 100:
-        return f"Great job {name}! You've performed {total_exercises} exercises, keep it up!"
-    elif total_exercises >= 500:
-        return f"Wow {name}! You've performed {total_exercises} exercises, you're a machine!"
-    return None
+    milestones_achieved = []
+    for threshold in MILESTONES["wod"]:
+        if total_wods >= threshold:
+            milestones_achieved.append({"type": "wod", "value": threshold})
+
+    for threshold in MILESTONES["calories"]:
+        if total_calories >= threshold:
+            milestones_achieved.append({"type": "calories", "value": threshold})
+
+    for threshold in MILESTONES["exercises"]:
+        if total_exercises >= threshold:
+            milestones_achieved.append({"type": "exercises", "value": threshold})
+    
+    return UserResponse(
+        name=name,
+        user_email=user_email,
+        total_workout_performed=total_wods,
+        total_performed_exercises=total_exercises,
+        total_calories_burned=total_calories,
+        milestone_achieved=milestones_achieved,
+        generated_at=datetime.datetime.utcnow()
+    )
+
         
 
 
