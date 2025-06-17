@@ -9,7 +9,7 @@ from ..services.user_service import (
     update_user_profile,
     get_user_profile
 )
-from ..services.auth_service import admin_required, jwt_required
+from ..services.auth_service import admin_required, jwt_required, api_key_required
 from ..services.rabbitmq_service import rabbitmq_service
 from ..services.workout_service import get_most_recent_workout_exercises
 import os
@@ -134,3 +134,29 @@ def get_profile():
     except Exception as e:
         current_app.logger.error(f"Error retrieving profile for user {g.user_email}: {str(e)}")
         return jsonify({"error": "Error retrieving profile", "details": str(e)}), 500
+
+@user_bp.route("/profile_open", methods=["POST"])
+@api_key_required
+def get_profile_open():
+    """
+    Open endpoint to retrieve user profile by email.
+    """
+    try:
+        user_email = request.json.get("email")
+        if not user_email:
+            return jsonify({"error": "Missing email"}), 400
+        current_app.logger.debug(f"Retrieving profile for user: {user_email}")
+        
+        # Get the user's profile
+        profile = get_user_profile(user_email)
+        if not profile:
+            current_app.logger.warning(f"Profile not found for user: {user_email}")
+            return jsonify({"error": "User not found"}), 404
+            
+        return jsonify(profile.model_dump()), 200
+        
+    except Exception as e:
+        current_app.logger.error(f"Error retrieving profile for user {g.user_email}: {str(e)}")
+        return jsonify({"error": "Error retrieving profile", "details": str(e)}), 500
+
+    

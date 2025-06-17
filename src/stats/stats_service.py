@@ -15,6 +15,20 @@ monolith_url = os.getenv("MONOLITH_URL")
 coach_url = os.getenv("COACH_URL")
 headers = {"X-API-Key": os.getenv("FIT_API_KEY")}
 
+def get_user_profile(user_email: str) -> Optional[dict]:
+    """
+    Fetches the user profile from the monolith service.
+    
+    Returns a dictionary with user profile data or None if not found.
+    """
+    try:
+        response = requests.post(f"{monolith_url}/profile_open", headers=headers, json={"email": user_email})
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as e:
+        logger.error(f"Error fetching user profile for {user_email}: {str(e)}")
+        return None
+
 
 def generate_workout_stats(user_email: str) -> Optional[WorkoutStatsSchema]:
     """
@@ -30,15 +44,21 @@ def generate_workout_stats(user_email: str) -> Optional[WorkoutStatsSchema]:
         resp = requests.post(f"{monolith_url}/workouts/last", headers=headers, json={"email": user_email})
         resp.raise_for_status()
         exercise_ids = resp.json()
+        user_data = get_user_profile(user_email)
 
         if not exercise_ids:
             logger.info(f"No last workout found for user {user_email}")
+            return None
+        
+        if not user_data:
+            logger.error(f"User profile not found for {user_email}")
             return None
 
         # create WorkoutStats record
         workout_stats = WorkoutStats(
             generated_at=datetime.datetime.now(datetime.timezone.utc),
-            user_email=user_email
+            user_email=user_email,
+            fitness_goal=user_data["fitness_goal"]
         )
         db.add(workout_stats)
         db.flush() 
@@ -67,6 +87,7 @@ def generate_workout_stats(user_email: str) -> Optional[WorkoutStatsSchema]:
             id=workout_stats.id,
             generated_at=workout_stats.generated_at.isoformat(),
             user_email=user_email,
+            fitness_goal=workout_stats.fitness_goal,
             exercises=[
                 ExercisePerformedSchema(
                     id=ex.id,
@@ -100,6 +121,7 @@ def get_stats_by_user(user_email: str) -> List[WorkoutStatsSchema]:
                 id=w.id,
                 generated_at=w.generated_at.isoformat(),
                 user_email=w.user_email,
+                fitness_goal=w.fitness_goal,
                 exercises=[
                     ExercisePerformedSchema(
                         id=e.id,
@@ -113,3 +135,7 @@ def get_stats_by_user(user_email: str) -> List[WorkoutStatsSchema]:
         ]
     finally:
         db.close()
+        
+# get_most_performed_exerise (admin required)
+# get_user_total_exercises_performed (jwt required)
+

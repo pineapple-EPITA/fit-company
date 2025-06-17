@@ -13,4 +13,5 @@ class ExercisePerformedSchema(BaseModel):
 class WorkoutStatsSchema(BaseModel):
     user_email: str
     generated_at: datetime
+    fitness_goal: Optional[str] = None
     exercises: List[ExercisePerformedSchema]

@@ -22,5 +22,6 @@ class WorkoutStats(Base):
     id = Column(Integer, primary_key=True, index=True)
     generated_at = Column(DateTime, nullable=False)
     user_email = Column(String, nullable=False, index=True)
+    fitness_goal = Column(String, nullable=True)
 
     exercises = relationship("ExercisePerformed", back_populates="workouts")
