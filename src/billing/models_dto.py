@@ -38,7 +38,6 @@ class PaymentResponse(PaymentBase):
 
 class SubscriptionBase(BaseModel):
     user_email: str
-    plan_type: PlanType
     user_id: int
     plan_type: str = Field(..., pattern="^(basic|premium)$")
     end_date: datetime
@@ -62,14 +61,6 @@ class SubscriptionResponse(SubscriptionBase):
     updated_at: datetime
     payments: List[PaymentResponse]
 
-<<<<<<< HEAD
-    class Config:
-        from_attributes = True
-        json_encoders = {
-            PlanType: lambda v: v.value,
-            SubscriptionStatus: lambda v: v.value
-        }
-=======
     model_config = ConfigDict(
         from_attributes=True,
         json_encoders={
@@ -78,7 +69,6 @@ class SubscriptionResponse(SubscriptionBase):
             SubscriptionStatus: lambda v: v.value
         }
     )
->>>>>>> a1837601b151a674de05520f8ccaf6ebedb62b3d
 
 class SubscriptionUpdate(BaseModel):
     status: Optional[SubscriptionStatus] = None
