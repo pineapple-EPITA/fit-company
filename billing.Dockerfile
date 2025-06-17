@@ -13,6 +13,12 @@ COPY pyproject.toml uv.lock ./
 
 RUN uv sync
 
+# Install curl and ensure it's available in the container
+RUN apt-get update && \
+    apt-get install -y curl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY main_billing.py /app/main_billing.py
 
 ENV FLASK_ENV=development

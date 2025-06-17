@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import uuid
 from typing import Optional, List
 from ..database import db_session
-from ..models_db import SubscriptionModel, PaymentModel, SubscriptionStatus
+from ..models_db import SubscriptionModel, PaymentModel, SubscriptionStatus, PlanType
 from ..models_dto import SubscriptionCreate, PaymentCreate, SubscriptionResponse, PaymentResponse
 
 class BillingService:
@@ -11,9 +11,10 @@ class BillingService:
         """Create a new subscription"""
         db = db_session()
         try:
+            plan_type = PlanType(subscription_data.plan_type)
             subscription = SubscriptionModel(
                 user_id=subscription_data.user_id,
-                plan_type=subscription_data.plan_type,
+                plan_type=plan_type,
                 end_date=subscription_data.end_date,
                 status=SubscriptionStatus.PENDING
             )
