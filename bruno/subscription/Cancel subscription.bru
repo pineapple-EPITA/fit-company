@@ -1,0 +1,11 @@
+meta {
+  name: Cancel subscription
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{endpoint}}/billing/subscriptions/{subscription_id}/cancel
+  body: none
+  auth: inherit
+}

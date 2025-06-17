@@ -1,0 +1,11 @@
+meta {
+  name: Process a payment
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{endpoint}}/billing/subscriptions/{subscription_id}/payments
+  body: none
+  auth: inherit
+}
