@@ -1,0 +1,11 @@
+meta {
+  name: Get all subscriptions
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{endpoint}}/billing/users/{user_id}/subscriptions
+  body: none
+  auth: inherit
+}

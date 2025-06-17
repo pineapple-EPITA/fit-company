@@ -18,8 +18,13 @@ class SubscriptionModel(Base):
     __tablename__ = "subscriptions"
 
     id = Column(Integer, primary_key=True)
+<<<<<<< HEAD
     user_email = Column(String, nullable=False)  # Changed from user_id to user_email
     plan_type = Column(Enum(PlanType), nullable=False)  # Changed to use PlanType enum
+=======
+    user_id = Column(Integer, nullable=False, index=True)
+    plan_type = Column(Enum(PlanType), nullable=False)  # Using the PlanType enum: "basic" or "premium"
+>>>>>>> a1837601b151a674de05520f8ccaf6ebedb62b3d
     status = Column(Enum(SubscriptionStatus), nullable=False, default=SubscriptionStatus.PENDING)
     start_date = Column(DateTime, nullable=False, default=datetime.utcnow)
     end_date = Column(DateTime, nullable=False)

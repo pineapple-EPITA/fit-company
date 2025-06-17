@@ -14,12 +14,12 @@ logging.basicConfig(
 app = Flask(__name__)
 app.logger.setLevel(logging.DEBUG)
 
-# Register blueprints
-app.register_blueprint(billing_bp, url_prefix='/billing')
-
-@app.route("/health")
+@app.route('/health')
 def health():
     return {"status": "UP"}
+
+# Register blueprints
+app.register_blueprint(billing_bp, url_prefix='/billing')
 
 def run_app():
     """Entry point for the application script"""

@@ -86,6 +86,7 @@ class BillingService:
         """Create a new subscription"""
         db = db_session()
         try:
+            plan_type = PlanType(subscription_data.plan_type)
             subscription = SubscriptionModel(
                 user_email=subscription_data.user_email,
                 plan_type=subscription_data.plan_type,
