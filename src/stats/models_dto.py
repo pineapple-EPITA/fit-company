@@ -19,7 +19,6 @@ class WorkoutStatsSchema(BaseModel):
     total_calories_burned: Optional[float] = None
     
 
-
 class UserResponse(BaseModel):
     name: str
     user_email: str
