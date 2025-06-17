@@ -8,6 +8,7 @@ class ExercisePerformedSchema(BaseModel):
     actual_reps: Optional[int] = None
     actual_weight: Optional[float] = None
     performed_at: datetime
+    calories_burned: Optional[float] = None
 
 
 class WorkoutStatsSchema(BaseModel):
@@ -15,3 +16,4 @@ class WorkoutStatsSchema(BaseModel):
     generated_at: datetime
     fitness_goal: Optional[str] = None
     exercises: List[ExercisePerformedSchema]
+    total_calories_burned: Optional[float] = None

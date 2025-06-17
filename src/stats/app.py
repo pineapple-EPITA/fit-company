@@ -1,6 +1,6 @@
 from flask import jsonify, request, Flask
 from .database import init_db
-from .stats_service import get_stats_by_user
+from .stats_service import get_stats_by_user, check_milestone
 import logging
 
 
@@ -29,6 +29,18 @@ def get_stats():
         return jsonify({"error": "Failed to fetch stats"}), 500
 
     return jsonify([s.model_dump() for s in stats]), 200
+
+@app.route("/milestone", methods=["POST"])
+def get_milestone():
+    email = request.json.get("email")
+    if not email:
+        return jsonify({"error": "Missing email"}), 400
+
+    milestone = jsonify(check_milestone(email))
+    if milestone is None:
+        return jsonify({"error": "Failed to fetch milestone"}), 500
+
+    return milestone, 200
 
 def run_app():
     """Entry point for the application script"""
