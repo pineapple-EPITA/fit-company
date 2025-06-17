@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional, List
-from .models_db import SubscriptionStatus
+from .models_db import SubscriptionStatus, PlanType
 
 class PaymentBase(BaseModel):
     amount: float = Field(..., gt=0)
@@ -24,7 +24,7 @@ class PaymentResponse(PaymentBase):
 
 class SubscriptionBase(BaseModel):
     user_id: int
-    plan_type: str
+    plan_type: PlanType
     end_date: datetime
 
 class SubscriptionCreate(SubscriptionBase):

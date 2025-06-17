@@ -60,6 +60,7 @@ def create_wod_for_user(user_email: str) -> List[Tuple[ExerciseModel, List[Tuple
       - Whether it's a primary muscle group
     
     Avoids repeating exercises from the user's last workout.
+    New: Premium users get 9 exercises, while basic users get 6 exercises.
     """
     # Simulate heavy computation (AI model processing, complex calculations, etc.) for 1-5 seconds
     logger.debug(f"running heavy computation to generate wod for user {user_email}")
@@ -69,6 +70,29 @@ def create_wod_for_user(user_email: str) -> List[Tuple[ExerciseModel, List[Tuple
     db = db_session()
     
     try:
+        # When a user requests a workout, the coach service checks their subscription status
+        # Check if user has already an active premium subscription (with 9 exercises)
+        monolith_url = os.getenv("MONOLITH_URL")
+        headers = {"X-API-Key": os.getenv("FIT_API_KEY")}
+        user_response = requests.get(f"{monolith_url}/users/{user_email}", headers=headers)
+        user_response.raise_for_status()
+        user_data = user_response.json()
+        
+        # Get user's active subscriptions
+        billing_url = os.getenv("BILLING_URL")
+        subs_response = requests.get(f"{billing_url}/users/{user_data['id']}/subscriptions", headers=headers)
+        subs_response.raise_for_status()
+        subscriptions = subs_response.json()
+        
+        # Check for active premium subscription
+        is_premium = any(
+            sub['status'] == 'active' and sub['plan_type'] == 'premium'
+            for sub in subscriptions
+        )
+        
+        # Number of exercises based on subscription
+        # The workout generation logic remains the same, just with more exercises for premium users (9 instead of 6)
+        num_exercises = 9 if is_premium else 6
 
         last_exercise_ids = get_last_workout_exercises(user_email)
 
@@ -77,11 +101,11 @@ def create_wod_for_user(user_email: str) -> List[Tuple[ExerciseModel, List[Tuple
         ).all()
 
         # If we don't have enough exercises (excluding last workout's), include all exercises
-        if len(available_exercises) < 6:
+        if len(available_exercises) < num_exercises:
             available_exercises = db.query(ExerciseModel).all()
         
-        # Select 6 random exercises
-        selected_exercises = random.sample(available_exercises, 6) if len(available_exercises) >= 6 else available_exercises
+        # Select random exercises based on subscription type
+        selected_exercises = random.sample(available_exercises, num_exercises) if len(available_exercises) >= num_exercises else available_exercises
         
         # Store today's exercises in history
         save_workout_exercises(user_email, [exercise.id for exercise in selected_exercises])

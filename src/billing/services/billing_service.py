@@ -75,7 +75,10 @@ class BillingService:
 
     @staticmethod
     def cancel_subscription(subscription_id: int) -> Optional[SubscriptionResponse]:
-        """Cancel a subscription"""
+        """Cancel a subscription
+        Users can cancel their subscription through the /subscriptions/{id}/cancel endpoint
+        The billing service updates the subscription status to CANCELLED
+        The next time the user requests a workout, they'll get the basic plan with 6 exercises"""
         db = db_session()
         try:
             subscription = db.query(SubscriptionModel).filter(SubscriptionModel.id == subscription_id).first()

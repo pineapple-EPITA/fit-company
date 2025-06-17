@@ -10,6 +10,10 @@ class SubscriptionStatus(enum.Enum):
     EXPIRED = "expired"
     PENDING = "pending"
 
+class PlanType(enum.Enum):
+    BASIC = "basic"
+    PREMIUM = "premium"
+
 class SubscriptionModel(Base):
     __tablename__ = "subscriptions"
 
