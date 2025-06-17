@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 import os
 
 # Get database URL from environment variable or use default
-DATABASE_URL = os.getenv("BILLING_DATABASE_URL", "sqlite:///./billing.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:docker@billing-db:5432/billing-db")
 
 # Create SQLAlchemy engine
 engine = create_engine(DATABASE_URL)

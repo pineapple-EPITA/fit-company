@@ -23,7 +23,7 @@ class PaymentResponse(PaymentBase):
         from_attributes = True
 
 class SubscriptionBase(BaseModel):
-    user_id: int
+    user_email: str
     plan_type: PlanType
     end_date: datetime
 
@@ -40,6 +40,10 @@ class SubscriptionResponse(SubscriptionBase):
 
     class Config:
         from_attributes = True
+        json_encoders = {
+            PlanType: lambda v: v.value,
+            SubscriptionStatus: lambda v: v.value
+        }
 
 class SubscriptionUpdate(BaseModel):
     status: Optional[SubscriptionStatus] = None

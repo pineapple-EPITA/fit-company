@@ -13,6 +13,8 @@ COPY pyproject.toml uv.lock ./
 
 RUN uv sync
 
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
 COPY main_billing.py /app/main_billing.py
 
 ENV FLASK_ENV=development
