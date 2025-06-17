@@ -11,3 +11,5 @@ wheels/
 
 todo.md
 private/
+.DS_Store
+**/.DS_Store

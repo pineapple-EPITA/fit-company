@@ -10,12 +10,17 @@ class SubscriptionStatus(enum.Enum):
     EXPIRED = "expired"
     PENDING = "pending"
 
+class PlanType(enum.Enum):
+    BASIC = "basic"
+    PREMIUM = "premium"
+
 class SubscriptionModel(Base):
     __tablename__ = "subscriptions"
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, nullable=False)
-    plan_type = Column(String(50), nullable=False)  # e.g., "premium", "basic"
+    user_email = Column(String, nullable=False)
+    user_id = Column(Integer, nullable=False, index=True)
+    plan_type = Column(Enum(PlanType), nullable=False)
     status = Column(Enum(SubscriptionStatus), nullable=False, default=SubscriptionStatus.PENDING)
     start_date = Column(DateTime, nullable=False, default=datetime.utcnow)
     end_date = Column(DateTime, nullable=False)
