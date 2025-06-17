@@ -5,9 +5,6 @@ import os
 import logging
 import time
 
-<<<<<<< HEAD
-# Get database URL from environment variable or use default
-=======
 # Configure logging
 logging.basicConfig(
     level=logging.DEBUG,
@@ -17,7 +14,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Get database URL from environment variable
->>>>>>> a1837601b151a674de05520f8ccaf6ebedb62b3d
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:docker@billing-db:5432/billing-db")
 
 # Create SQLAlchemy engine

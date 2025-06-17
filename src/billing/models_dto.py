@@ -37,13 +37,10 @@ class PaymentResponse(PaymentBase):
     )
 
 class SubscriptionBase(BaseModel):
-<<<<<<< HEAD
     user_email: str
     plan_type: PlanType
-=======
     user_id: int
     plan_type: str = Field(..., pattern="^(basic|premium)$")
->>>>>>> a1837601b151a674de05520f8ccaf6ebedb62b3d
     end_date: datetime
 
     model_config = ConfigDict(
