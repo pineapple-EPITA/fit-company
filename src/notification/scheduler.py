@@ -3,7 +3,7 @@ from service import send_notification
 
 def check_and_notify():
     try:
-        response = requests.get("http://billing:5000/billing/subscriptions/expiring?days=3")
+        response = requests.get("http://billing:5000/billing/subscriptions/expiring?days=9999")
         expiring_subs = response.json()
 
         for sub in expiring_subs:
