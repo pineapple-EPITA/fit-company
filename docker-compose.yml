@@ -195,6 +195,7 @@ services:
       - "12112:5005"
     depends_on:
       - billing
+      - rabbitmq
     networks:
       - fit
 
