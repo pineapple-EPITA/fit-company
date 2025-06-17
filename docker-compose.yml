@@ -76,6 +76,32 @@ services:
       rabbitmq:
         condition: service_healthy
 
+  billing:
+    build:
+      context: .
+      dockerfile: billing.Dockerfile
+    ports:
+      - "12111:5000"
+    volumes:
+      - ./src/billing:/app/src/billing
+    links:
+      - billing-db
+      - rabbitmq
+    environment:
+      - MONOLITH_URL=http://monolith:5000
+      - FIT_API_KEY=some_very_secret_key
+      - DATABASE_URL=postgresql://postgres:docker@billing-db:5432/billing-db
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_DEFAULT_USER=rabbit
+      - RABBITMQ_DEFAULT_PASS=docker
+    networks:
+      - fit
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      billing-db:
+        condition: service_healthy
+
   monolith-db:
     image: postgres:latest
     ports:
@@ -129,7 +155,24 @@ services:
       retries: 5
     networks:
       - fit
-      
+
+  billing-db:
+    image: postgres:latest
+    ports:
+      - "12121:5432"
+    command: postgres -c max_connections=200
+    user: postgres
+    environment:
+      - POSTGRES_DB=billing-db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=docker
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-d", "billing-db"]
+      interval: 5s
+      timeout: 30s
+      retries: 5
+    networks:
+      - fit
 
   rabbitmq:
     image: rabbitmq:3-management
