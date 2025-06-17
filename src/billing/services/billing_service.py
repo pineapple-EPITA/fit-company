@@ -6,7 +6,7 @@ import pika
 import os
 from typing import Optional, List
 from ..database import db_session
-from ..models_db import SubscriptionModel, PaymentModel, SubscriptionStatus
+from ..models_db import SubscriptionModel, PaymentModel, SubscriptionStatus, PlanType
 from ..models_dto import (
     SubscriptionCreate,
     PaymentCreate,
@@ -86,10 +86,12 @@ class BillingService:
         """Create a new subscription"""
         db = db_session()
         try:
-            plan_type = PlanType(subscription_data.plan_type)
+            # Convert plan_type string to enum
+            plan_type = PlanType(subscription_data.plan_type.lower())
             subscription = SubscriptionModel(
                 user_email=subscription_data.user_email,
-                plan_type=subscription_data.plan_type,
+                user_id=subscription_data.user_id or 0,  # Default to 0 if not provided
+                plan_type=plan_type,
                 end_date=subscription_data.end_date,
                 status=SubscriptionStatus.PENDING,
             )

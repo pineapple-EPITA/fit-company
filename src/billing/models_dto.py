@@ -38,7 +38,7 @@ class PaymentResponse(PaymentBase):
 
 class SubscriptionBase(BaseModel):
     user_email: str
-    user_id: int
+    user_id: Optional[int] = None
     plan_type: str = Field(..., pattern="^(basic|premium)$")
     end_date: datetime
 
