@@ -97,6 +97,7 @@ def update_user_profile(email: str, profile: UserProfileSchema) -> Optional[User
         return UserProfileResponseSchema(
             email=user.email,
             name=user.name,
+            plan=user.plan,
             weight=user.weight,
             height=user.height,
             fitness_goal=user.fitness_goal,
@@ -121,6 +122,7 @@ def get_user_profile(email: str) -> Optional[UserProfileResponseSchema]:
         return UserProfileResponseSchema(
             email=user.email,
             name=user.name,
+            plan=user.plan,
             weight=user.weight,
             height=user.height,
             fitness_goal=user.fitness_goal,
@@ -128,3 +130,37 @@ def get_user_profile(email: str) -> Optional[UserProfileResponseSchema]:
         )
     finally:
         db.close()
+        
+def update_user_plan(email: str, plan_type: str):
+    """
+    Update user plan type (basic or premium)
+    """
+    db = db_session()
+    try:
+        user = db.query(UserModel).filter(UserModel.email == email).first()
+        if not user:
+            return None
+
+        if plan_type == "premium_plan_activated" and user.plan == "basic":
+            user.plan = "premium"
+            db.commit()
+
+        elif plan_type == "subscription_cancelled" and user.plan == "premium":
+            user.plan = "basic"
+            db.commit()
+
+        return UserProfileResponseSchema(
+            email=user.email,
+            name=user.name,
+            plan=user.plan,
+            weight=user.weight,
+            height=user.height,
+            fitness_goal=user.fitness_goal,
+            onboarded=user.onboarded
+        )
+    except Exception as e:
+        db.rollback()
+        raise e
+    finally:
+        db.close()
+

@@ -2,6 +2,8 @@ import os
 import pika
 import json
 import logging
+from ..database import db_session
+from ..models_db import UserModel
 from typing import Dict, Any
 
 from ..queue_messages import CreateWodMessage, CreatePerformedMessage
@@ -139,19 +141,28 @@ class RabbitMQService:
 
         def callback(ch, method, properties, body):
             try:
+                logger.debug(f"Received message from {queue_name}: {body}")
                 message = json.loads(body)
                 if message.get("type") == "premium_plan_activated":
                     user_email = message.get("user_email")
-                    from ..database import db_session
-                    from ..models_db import UserModel
                     db = db_session()
                     user = db.query(UserModel).filter_by(email=user_email).first()
-                    if user:
+                    if user.plan == "basic":
                         user.plan = "premium"
                         db.commit()
-                        logger.info(f"Upgraded user {user_email} to premium plan via SAGA event.")
+                        logger.info(f"Upgraded user {user_email} to premium plan.")
+                    db.close()
+                if message.get("type") == "subscription_cancelled":
+                    user_email = message.get("user_email")
+                    db = db_session()
+                    user = db.query(UserModel).filter_by(email=user_email).first()
+                    if user.plan == "premium":
+                        user.plan = "basic"
+                        db.commit()
+                        logger.info(f"Downgraded user {user_email} to basic plan.")
                     db.close()
                 ch.basic_ack(delivery_tag=method.delivery_tag)
+                
             except Exception as e:
                 logger.error(f"Error processing premium_plan_activated event: {e}", exc_info=True)
                 ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)

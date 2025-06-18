@@ -11,14 +11,14 @@ class UserModel(Base):
     name = Column(String, nullable=False)
     role = Column(String, nullable=False)
     password_hash = Column(String, nullable=False)
+    plan = Column(String, nullable=False, default="basic")
+
     
     # Profile information (nullable as they'll be filled during onboarding)
     weight = Column(Float, nullable=True)
     height = Column(Float, nullable=True)
     fitness_goal = Column(String, nullable=True)
     onboarded = Column(String, default="false", nullable=False)
-    plan = Column(String, nullable=False, default="basic")
-
     # Relationships
     workouts = relationship("WorkoutModel", back_populates="user")
 
