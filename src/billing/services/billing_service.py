@@ -27,6 +27,20 @@ class BillingService:
         try:
             # Convert plan_type string to enum
             plan_type = PlanType(subscription_data.plan_type.lower())
+
+            # Check for existing active subscription of the same plan type
+            existing = (
+                db.query(SubscriptionModel)
+                .filter(
+                    SubscriptionModel.user_email == subscription_data.user_email,
+                    SubscriptionModel.plan_type == plan_type,
+                    SubscriptionModel.status == SubscriptionStatus.ACTIVE
+                )
+                .first()
+            )
+            if existing:
+                raise Exception(f"User already has an active subscription for the {plan_type.value} plan.")
+
             subscription = SubscriptionModel(
                 user_email=subscription_data.user_email,
                 user_id=subscription_data.user_id or 0,  # Default to 0 if not provided
@@ -77,6 +91,16 @@ class BillingService:
                         "end_date": subscription.end_date.isoformat(),
                     },
                 )
+                # Publish premium_plan_activated event if plan is premium
+                if subscription.plan_type == PlanType.PREMIUM:
+                    rabbitmq_service.publish_message(
+                        "premium_plan_activated",
+                        {
+                            "subscription_id": subscription.id,
+                            "user_email": subscription.user_email,
+                            "end_date": subscription.end_date.isoformat(),
+                        },
+                    )
 
             db.add(payment)
             db.commit()

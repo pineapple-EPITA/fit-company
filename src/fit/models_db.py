@@ -17,12 +17,13 @@ class UserModel(Base):
     height = Column(Float, nullable=True)
     fitness_goal = Column(String, nullable=True)
     onboarded = Column(String, default="false", nullable=False)
+    plan = Column(String, nullable=False, default="basic")
 
     # Relationships
     workouts = relationship("WorkoutModel", back_populates="user")
 
     def __repr__(self):
-        return f"<User(email='{self.email}', name='{self.name}', role='{self.role}')>"
+        return f"<User(email='{self.email}', name='{self.name}', role='{self.role}', plan='{self.plan}')>"
 
 class WorkoutModel(Base):
     __tablename__ = 'workouts'
