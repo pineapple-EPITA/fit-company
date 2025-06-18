@@ -18,7 +18,7 @@ app.logger.setLevel(logging.DEBUG)
 def health():
     return {"status": "UP"}
 
-@app.route("/statics", methods=["POST"])
+@app.route("/statistics", methods=["POST"])
 def get_stats():
     email = request.json.get("email")
     if not email:
@@ -30,7 +30,7 @@ def get_stats():
 
     return jsonify([s.model_dump() for s in stats]), 200
 
-@app.route("/statics/you", methods=["POST"])
+@app.route("/statistics/you", methods=["POST"])
 def get_milestone():
     email = request.json.get("email")
     if not email:
