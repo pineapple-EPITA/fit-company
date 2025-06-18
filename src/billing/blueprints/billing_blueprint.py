@@ -5,7 +5,7 @@ from ..models_dto import SubscriptionCreate, PaymentCreate
 
 billing_bp = Blueprint('billing', __name__)
 
-@billing_bp.route('/health', methods=['GET'])
+@billing_bp.route('/health_billing', methods=['GET'])
 def health_check():
     return jsonify({"status": "healthy"}), 200
 

@@ -79,7 +79,7 @@ def create_wod_for_user(user_email: str) -> List[Tuple[ExerciseModel, List[Tuple
         
         # Get user's active subscriptions
         billing_url = os.getenv("BILLING_URL")
-        subs_response = requests.get(f"{billing_url}/users/{user_data['email']}/subscriptions", headers=headers)
+        subs_response = requests.get(f"{billing_url}/billing/users/{user_data['email']}/subscriptions", headers=headers)
         subs_response.raise_for_status()
         subscriptions = subs_response.json()
         

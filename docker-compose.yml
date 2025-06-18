@@ -41,8 +41,8 @@ services:
     environment:
       - MONOLITH_URL=http://monolith:5000
       - FIT_API_KEY=some_very_secret_key
-      - COACH_URL=http://coach:5001
-      - BILLING_URL=http://billing:5002
+      - COACH_URL=http://coach:5000
+      - BILLING_URL=http://billing:5000
       - DATABASE_URL=postgresql://postgres:docker@coach-db:5432/coach-db
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_DEFAULT_USER=rabbit
