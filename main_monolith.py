@@ -1,5 +1,12 @@
 #!/usr/bin/env python
-from src.fit.app import run_app
+import threading
+from src.fit.app import app
+from src.fit.services.rabbitmq_service import rabbitmq_service
+
+def start_premium_plan_consumer():
+    consumer_thread = threading.Thread(target=rabbitmq_service.start_premium_plan_consumer, daemon=True)
+    consumer_thread.start()
 
 if __name__ == "__main__":
-    run_app() 
+    start_premium_plan_consumer()
+    app.run(host="0.0.0.0", port=5000, debug=True) 

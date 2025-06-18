@@ -91,6 +91,16 @@ class BillingService:
                         "end_date": subscription.end_date.isoformat(),
                     },
                 )
+                # Publish premium_plan_activated event if plan is premium
+                if subscription.plan_type == PlanType.PREMIUM:
+                    rabbitmq_service.publish_message(
+                        "premium_plan_activated",
+                        {
+                            "subscription_id": subscription.id,
+                            "user_email": subscription.user_email,
+                            "end_date": subscription.end_date.isoformat(),
+                        },
+                    )
 
             db.add(payment)
             db.commit()
