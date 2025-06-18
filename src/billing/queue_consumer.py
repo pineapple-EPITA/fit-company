@@ -34,6 +34,17 @@ def process_message(ch, method, properties, body):
             if subscription_id:
                 subscription = BillingService.cancel_subscription(subscription_id)
                 logger.info(f"Cancelled subscription: {subscription}")
+        
+        elif message.get('type') == 'premium_plan_activated':
+            # Reject it so it goes back to the queue for the monolith to consume
+            logger.info("Rejecting premium_plan_activated message - leaving for monolith")
+            ch.basic_reject(delivery_tag=method.delivery_tag, requeue=True)
+            return  # Don't acknowledge, reject and requeue
+        
+        elif message.get('type') == 'subscription_activated':
+            # This message should be handled by the notification service
+            # Just acknowledge it and let it pass through
+            logger.info("Ignoring subscription_activated message - should be handled by notification service")
 
         # Acknowledge the message
         ch.basic_ack(delivery_tag=method.delivery_tag)

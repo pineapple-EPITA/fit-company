@@ -34,7 +34,7 @@ class BillQueueConsumer:
 
     def connect(self):
         """Establish connection to RabbitMQ server"""
-        logger.debug("Attempting to connect to RabbitMQ")
+        logger.info("Attempting to connect to RabbitMQ")
         credentials = pika.PlainCredentials(
             username=os.getenv("RABBITMQ_DEFAULT_USER", "rabbit"),
             password=os.getenv("RABBITMQ_DEFAULT_PASS", "docker")
@@ -46,31 +46,18 @@ class BillQueueConsumer:
             heartbeat=600,
             blocked_connection_timeout=300
         )
-        self.connection = pika.BlockingConnection(parameters)
-        self.channel = self.connection.channel()
+        try:
+            self.connection = pika.BlockingConnection(parameters)
+            self.channel = self.connection.channel()
+            logger.info("Successfully connected to RabbitMQ")
+        except Exception as e:
+            logger.error(f"Failed to connect to RabbitMQ: {e}")
+            raise
         
-        arguments = {
-            "x-message-ttl": 60000,  # 1 minute
-            "x-max-length": 100,
-            "x-dead-letter-exchange": "dlx",  # Dead Letter Exchange
-            "x-dead-letter-routing-key": f"{self.queue_name}-dead"
-        }
-        
-        
-        # Declare the Dead Letter Exchange and Queue
-        self.channel.exchange_declare(exchange="dlx", exchange_type="direct")
-        self.channel.queue_declare(queue=f"{self.queue_name}-dead", durable=True)
-        self.channel.queue_bind(
-            exchange="dlx",
-            queue=f"{self.queue_name}-dead",
-            routing_key=f"{self.queue_name}-dead"
-        )
-
-        # Declare the main queue
+        # Declare the main queue without arguments to avoid conflicts
         self.channel.queue_declare(
             queue=self.queue_name,
-            durable=True,
-            arguments=arguments
+            durable=True
         )
         logger.info(f"Successfully connected to RabbitMQ and declared queue '{self.queue_name}'")
 
@@ -78,16 +65,20 @@ class BillQueueConsumer:
         """Handle received messages"""
         
         try:
-            logger.debug(f"Received message from {self.queue_name}: {body}")
+            logger.info(f"Received message from {self.queue_name}: {body}")
             message = json.loads(body)
             user_email = message.get("user_email")
             sub_type = message.get("type")
+            logger.info(f"Processing message - user_email: {user_email}, type: {sub_type}")
+            
             if not user_email or not sub_type:
                 logger.warning("Invalid message: missing user_email or type")
                 ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
                 return
             
-            update_user_plan(user_email, sub_type)  
+            logger.info(f"Calling update_user_plan for {user_email} with type {sub_type}")
+            result = update_user_plan(user_email, sub_type)
+            logger.info(f"update_user_plan result: {result}")
             ch.basic_ack(delivery_tag=method.delivery_tag)
         
         
@@ -138,8 +129,11 @@ class BillQueueConsumer:
 
 def run_consumer():
     # Create a singleton instance
+    print("=== SAGA CONSUMER STARTING ===")
+    logger.info("Starting SAGA consumer...")
     bill_queue_consumer = BillQueueConsumer()
     """Entry point to start the consumer"""
     # try:
+    print("=== SAGA CONSUMER ABOUT TO START CONSUMING ===")
     logger.info("Starting consumer")
     bill_queue_consumer.start_consuming()
