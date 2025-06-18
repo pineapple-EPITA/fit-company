@@ -196,6 +196,11 @@ services:
       - "12112:5005"
     depends_on:
       - billing
+      - rabbitmq
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_DEFAULT_USER=rabbit
+      - RABBITMQ_DEFAULT_PASS=docker
     networks:
       - fit
 
