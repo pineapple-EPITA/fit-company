@@ -11,18 +11,19 @@ class UserModel(Base):
     name = Column(String, nullable=False)
     role = Column(String, nullable=False)
     password_hash = Column(String, nullable=False)
+    plan = Column(String, nullable=False, default="basic")
+
     
     # Profile information (nullable as they'll be filled during onboarding)
     weight = Column(Float, nullable=True)
     height = Column(Float, nullable=True)
     fitness_goal = Column(String, nullable=True)
     onboarded = Column(String, default="false", nullable=False)
-
     # Relationships
     workouts = relationship("WorkoutModel", back_populates="user")
 
     def __repr__(self):
-        return f"<User(email='{self.email}', name='{self.name}', role='{self.role}')>"
+        return f"<User(email='{self.email}', name='{self.name}', role='{self.role}', plan='{self.plan}')>"
 
 class WorkoutModel(Base):
     __tablename__ = 'workouts'

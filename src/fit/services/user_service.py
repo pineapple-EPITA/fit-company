@@ -5,6 +5,9 @@ from typing import List, Optional
 import random
 import string
 import hashlib
+import logging
+
+logger = logging.getLogger(__name__)
 
 def generate_random_password(length=10):
     """Generate a random password of specified length"""
@@ -97,6 +100,7 @@ def update_user_profile(email: str, profile: UserProfileSchema) -> Optional[User
         return UserProfileResponseSchema(
             email=user.email,
             name=user.name,
+            plan=user.plan,
             weight=user.weight,
             height=user.height,
             fitness_goal=user.fitness_goal,
@@ -121,6 +125,7 @@ def get_user_profile(email: str) -> Optional[UserProfileResponseSchema]:
         return UserProfileResponseSchema(
             email=user.email,
             name=user.name,
+            plan=user.plan,
             weight=user.weight,
             height=user.height,
             fitness_goal=user.fitness_goal,
@@ -128,3 +133,45 @@ def get_user_profile(email: str) -> Optional[UserProfileResponseSchema]:
         )
     finally:
         db.close()
+        
+def update_user_plan(email: str, plan_type: str):
+    """
+    Update user plan type (basic or premium)
+    """
+    logger.info(f"Updating user plan for {email} to {plan_type}")
+    db = db_session()
+    try:
+        user = db.query(UserModel).filter(UserModel.email == email).first()
+        if not user:
+            logger.warning(f"User {email} not found")
+            return None
+
+        logger.info(f"Current plan for {email}: {user.plan}")
+        
+        if plan_type in ["premium_plan_activated", "subscription_activated"]:
+            user.plan = "premium"
+            db.commit()
+            logger.info(f"Updated {email} plan to premium")
+        elif plan_type == "subscription_cancelled":
+            user.plan = "basic"
+            db.commit()
+            logger.info(f"Updated {email} plan to basic")
+        else:
+            logger.warning(f"Unknown plan_type: {plan_type}")
+
+        return UserProfileResponseSchema(
+            email=user.email,
+            name=user.name,
+            plan=user.plan,
+            weight=user.weight,
+            height=user.height,
+            fitness_goal=user.fitness_goal,
+            onboarded=user.onboarded
+        )
+    except Exception as e:
+        logger.error(f"Error updating user plan: {e}")
+        db.rollback()
+        raise e
+    finally:
+        db.close()
+
