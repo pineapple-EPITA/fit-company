@@ -1,0 +1,35 @@
+meta {
+  name: login admin
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{endpoint}}/oauth/token
+  body: formUrlEncoded
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/x-www-form-urlencoded
+}
+
+body:json {
+  {
+    "email": "jane.doe@mail.com",
+    "password": "{{admin-pass}}"
+  }
+}
+
+body:form-urlencoded {
+  username: jane.doe@mail.com
+  password: 1ca-Jz\\A2'
+}
+
+tests {
+          const response = await req.response;
+          const data = await response.json();
+          if (data.access_token) {
+            bru.setEnvVar('token', data.access_token);
+          }
+}

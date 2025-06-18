@@ -71,16 +71,15 @@ def create_wod_for_user(user_email: str) -> List[Tuple[ExerciseModel, List[Tuple
     
     try:
         # When a user requests a workout, the coach service checks their subscription status
-        # Check if user has already an active premium subscription (with 9 exercises)
         monolith_url = os.getenv("MONOLITH_URL")
         headers = {"X-API-Key": os.getenv("FIT_API_KEY")}
-        user_response = requests.get(f"{monolith_url}/users/{user_email}", headers=headers)
+        user_response = requests.post(f"{monolith_url}/profile_open", headers=headers, json={"email": user_email}) 
         user_response.raise_for_status()
         user_data = user_response.json()
         
         # Get user's active subscriptions
         billing_url = os.getenv("BILLING_URL")
-        subs_response = requests.get(f"{billing_url}/users/{user_data['id']}/subscriptions", headers=headers)
+        subs_response = requests.get(f"{billing_url}/users/{user_data['email']}/subscriptions", headers=headers)
         subs_response.raise_for_status()
         subscriptions = subs_response.json()
         

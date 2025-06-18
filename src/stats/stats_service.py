@@ -6,7 +6,7 @@ import requests
 from typing import Optional, List
 
 from .models_db import ExercisePerformed, WorkoutStats
-from .models_dto import WorkoutStatsSchema, ExercisePerformedSchema
+from .models_dto import WorkoutStatsSchema, ExercisePerformedSchema, UserResponse
 from .database import db_session
 
 logger = logging.getLogger(__name__)
@@ -14,6 +14,31 @@ logger = logging.getLogger(__name__)
 monolith_url = os.getenv("MONOLITH_URL")
 coach_url = os.getenv("COACH_URL")
 headers = {"X-API-Key": os.getenv("FIT_API_KEY")}
+
+def calculate_calories(weight: float, reps: int) -> float:
+    """
+    Calculate calories burned based on weight and reps.
+    This is a simplified formula for demonstration purposes.
+    """
+    # Assuming 0.1 calories burned per kg per rep
+    
+    if weight is None or reps is None:
+        return None
+    return round(weight * reps * 0.1, 2)
+
+def get_user_profile(user_email: str) -> Optional[dict]:
+    """
+    Fetches the user profile from the monolith service.
+    
+    Returns a dictionary with user profile data or None if not found.
+    """
+    try:
+        response = requests.post(f"{monolith_url}/profile_open", headers=headers, json={"email": user_email})
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as e:
+        logger.error(f"Error fetching user profile for {user_email}: {str(e)}")
+        return None
 
 
 def generate_workout_stats(user_email: str) -> Optional[WorkoutStatsSchema]:
@@ -30,15 +55,22 @@ def generate_workout_stats(user_email: str) -> Optional[WorkoutStatsSchema]:
         resp = requests.post(f"{monolith_url}/workouts/last", headers=headers, json={"email": user_email})
         resp.raise_for_status()
         exercise_ids = resp.json()
+        user_data = get_user_profile(user_email)
 
         if not exercise_ids:
             logger.info(f"No last workout found for user {user_email}")
+            return None
+        
+        if not user_data:
+            logger.error(f"User profile not found for {user_email}")
             return None
 
         # create WorkoutStats record
         workout_stats = WorkoutStats(
             generated_at=datetime.datetime.now(datetime.timezone.utc),
-            user_email=user_email
+            user_email=user_email,
+            fitness_goal=user_data["fitness_goal"],
+            
         )
         db.add(workout_stats)
         db.flush() 
@@ -49,13 +81,17 @@ def generate_workout_stats(user_email: str) -> Optional[WorkoutStatsSchema]:
             ex_resp = requests.get(f"{coach_url}/exercises/{ex_id}")
             ex_resp.raise_for_status()
             ex_data = ex_resp.json()
+            
+            actual_r = random.randint(8, 15)
+            actual_w = round(random.uniform(5.0, 50.0), 1)
 
             performed = ExercisePerformed(
                 name=ex_data["name"],
-                actual_reps=random.randint(8, 15),
-                actual_weight=round(random.uniform(5.0, 50.0), 1),
+                actual_reps=actual_r,
+                actual_weight=actual_w,
                 performed_at=datetime.datetime.utcnow(),
-                workout_id=workout_stats.id
+                workout_id=workout_stats.id,
+                calories_burned=calculate_calories(actual_w, actual_r)
             )
             db.add(performed)
             exercise_schemas.append(performed)
@@ -67,6 +103,7 @@ def generate_workout_stats(user_email: str) -> Optional[WorkoutStatsSchema]:
             id=workout_stats.id,
             generated_at=workout_stats.generated_at.isoformat(),
             user_email=user_email,
+            fitness_goal=workout_stats.fitness_goal,
             exercises=[
                 ExercisePerformedSchema(
                     id=ex.id,
@@ -94,22 +131,123 @@ def generate_workout_stats(user_email: str) -> Optional[WorkoutStatsSchema]:
 def get_stats_by_user(user_email: str) -> List[WorkoutStatsSchema]:
     db = db_session()
     try:
-        stats = db.query(WorkoutStats).filter(WorkoutStats.user_email == user_email).all()
+        stats = (
+            db.query(WorkoutStats)
+            .filter(WorkoutStats.user_email == user_email)
+            .order_by(WorkoutStats.generated_at.desc())
+            .all()
+        )
         return [
             WorkoutStatsSchema(
                 id=w.id,
                 generated_at=w.generated_at.isoformat(),
                 user_email=w.user_email,
+                fitness_goal=w.fitness_goal,
+                total_calories_burned=sum(e.calories_burned for e in w.exercises),
                 exercises=[
                     ExercisePerformedSchema(
                         id=e.id,
                         name=e.name,
                         actual_reps=e.actual_reps,
                         actual_weight=e.actual_weight,
-                        performed_at=e.performed_at.isoformat()
+                        performed_at=e.performed_at.isoformat(),
+                        calories_burned=e.calories_burned
                     ) for e in w.exercises
                 ]
             ) for w in stats
         ]
     finally:
         db.close()
+        
+def calculate_total_calories_burned(user_email: str):
+    db = db_session()
+    try:
+        stats = (
+            db.query(WorkoutStats)
+            .filter(WorkoutStats.user_email == user_email)
+            .all()
+        )
+        total_calories = sum(
+            sum(e.calories_burned for e in w.exercises) for w in stats
+        )
+        return total_calories
+    finally:
+        db.close()
+        
+        
+def calculate_total_performed_exercises(user_email: str):
+    """
+    Calculate the total number of performed exercises for a user.
+    """
+    db = db_session()
+    try:
+        stats = (
+            db.query(WorkoutStats)
+            .filter(WorkoutStats.user_email == user_email)
+            .all()
+        )
+        total_exercises = sum(len(w.exercises) for w in stats)
+        return total_exercises
+    finally:
+        db.close()
+        
+def calculate_total_wods_performed(user_email: str):
+    """
+    Calculate the total number of workouts performed by a user.
+    """
+    db = db_session()
+    try:
+        stats = (
+            db.query(WorkoutStats)
+            .filter(WorkoutStats.user_email == user_email)
+            .all()
+        )
+        total_wods = len(stats)
+        return total_wods
+    finally:
+        db.close()
+        
+        
+def check_milestone(user_email: str):
+    """
+    Check if the user has reached a milestone of 1000 calories burned.
+    If so, return a congratulatory message.
+    """
+    user_data = get_user_profile(user_email)
+    name = user_data["name"]
+    total_calories = calculate_total_calories_burned(user_email)
+    total_exercises = calculate_total_performed_exercises(user_email)
+    total_wods = calculate_total_wods_performed(user_email)
+    
+    MILESTONES = {
+        "wod": [5, 10, 15],
+        "calories": [1000, 5000, 10000],
+        "exercises": [20, 50, 100]
+    }
+    
+    milestones_achieved = []
+    for threshold in MILESTONES["wod"]:
+        if total_wods >= threshold:
+            milestones_achieved.append({"type": "wod", "value": threshold})
+
+    for threshold in MILESTONES["calories"]:
+        if total_calories >= threshold:
+            milestones_achieved.append({"type": "calories", "value": threshold})
+
+    for threshold in MILESTONES["exercises"]:
+        if total_exercises >= threshold:
+            milestones_achieved.append({"type": "exercises", "value": threshold})
+    
+    return UserResponse(
+        name=name,
+        user_email=user_email,
+        total_workout_performed=total_wods,
+        total_performed_exercises=total_exercises,
+        total_calories_burned=total_calories,
+        milestone_achieved=milestones_achieved,
+        generated_at=datetime.datetime.utcnow()
+    )
+
+        
+
+

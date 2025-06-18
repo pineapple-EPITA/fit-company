@@ -5,7 +5,18 @@ meta {
 }
 
 post {
-  url: {{endpoint}}/billing/subscriptions
-  body: none
+  url: http://localhost:12111/billing/subscriptions
+  body: json
   auth: inherit
+}
+
+body:json {
+     {
+       "user_id": 1,
+       "plan_type": "premium",
+       "start_date": "2024-03-20",
+       "end_date": "2024-04-20",
+       "price": 29.99,
+       "status": "active"
+     }
 }
