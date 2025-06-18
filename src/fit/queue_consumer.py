@@ -23,7 +23,7 @@ class BillQueueConsumer:
         if not self._is_initialized:
             self.connection = None
             self.channel = None
-            self.queue_name = "billing_queue"
+            self.queue_name = "plan_queue"
             self._is_initialized = True
             self.connect()
 
@@ -78,7 +78,7 @@ class BillQueueConsumer:
         """Handle received messages"""
         
         try:
-            logger.debug(f"Received message from {self.queue_name}: {body}")
+            logger.info(f"Received message from {self.queue_name}: {body}")
             message = json.loads(body)
             user_email = message.get("user_email")
             sub_type = message.get("type")
@@ -103,6 +103,7 @@ class BillQueueConsumer:
     def start_consuming(self):
         """Start consuming messages from the queue"""
         try:
+            logger.info("Starting RabbitMQ consumer")
             self.ensure_connection()
             
             # Set up consumer with QoS
@@ -142,4 +143,5 @@ def run_consumer():
     """Entry point to start the consumer"""
     # try:
     logger.info("Starting consumer")
+    print("Starting consumer")
     bill_queue_consumer.start_consuming()

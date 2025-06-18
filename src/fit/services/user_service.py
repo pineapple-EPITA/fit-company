@@ -141,13 +141,17 @@ def update_user_plan(email: str, plan_type: str):
         if not user:
             return None
 
-        if plan_type == "premium_plan_activated" and user.plan == "basic":
+        if plan_type == "premium_plan_activated":
             user.plan = "premium"
             db.commit()
+            db.refresh(user)
 
-        elif plan_type == "subscription_cancelled" and user.plan == "premium":
+
+        elif plan_type == "subscription_cancelled":
             user.plan = "basic"
             db.commit()
+            db.refresh(user)
+
 
         return UserProfileResponseSchema(
             email=user.email,
