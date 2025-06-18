@@ -5,7 +5,7 @@ from ..models_dto import SubscriptionCreate, PaymentCreate
 
 billing_bp = Blueprint('billing', __name__)
 
-@billing_bp.route('/health_billing', methods=['GET'])
+@billing_bp.route('/health', methods=['GET'])
 def health_check():
     return jsonify({"status": "healthy"}), 200
 
@@ -51,7 +51,7 @@ def get_user_subscriptions(user_email):
     except Exception as e:
         return jsonify({"error": "Error retrieving user subscriptions", "details": str(e)}), 500
 
-@billing_bp.route('/subscriptions/<int:subscription_id>/cancel', methods=['POST'])
+@billing_bp.route('/subscriptions/<int:subscription_id>/cancel', methods=['GET'])
 def cancel_subscription(subscription_id):
     try:
         subscription = BillingService.cancel_subscription(subscription_id)
