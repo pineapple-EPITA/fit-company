@@ -43,8 +43,10 @@ def process_message(ch, method, properties, body):
         
         elif message.get('type') == 'subscription_activated':
             # This message should be handled by the notification service
-            # Just acknowledge it and let it pass through
-            logger.info("Ignoring subscription_activated message - should be handled by notification service")
+            # Reject it so it goes back to the queue for notification service to consume
+            logger.info("Rejecting subscription_activated message - leaving for notification service")
+            ch.basic_reject(delivery_tag=method.delivery_tag, requeue=True)
+            return  # Don't acknowledge, reject and requeue
 
         # Acknowledge the message
         ch.basic_ack(delivery_tag=method.delivery_tag)
